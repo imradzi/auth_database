@@ -1,0 +1,2 @@
+pyinstaller checktoken.py --onefile 
+pyinstaller sendnotification.py --onefile 

@@ -1,0 +1,2 @@
+scp build-release/ActivityTrackker root@ppos.com:/home/activitytrackker/
+

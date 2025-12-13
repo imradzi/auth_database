@@ -1,0 +1,4 @@
+ssh root@ppos.com "systemctl stop auth_database.service"
+scp build-release/auth_database root@ppos.com:/home/ppos/bin/
+ssh root@ppos.com "systemctl start auth_database.service"
+ssh root@ppos.com "ps -ef | grep auth_database"
