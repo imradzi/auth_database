@@ -26,7 +26,6 @@
 #undef _USEPOSTGRESQL
 #endif
 
-#include "sqlexception.h"
 #include "authDB.h"
 #include "activityTrackkerDB.h"
 

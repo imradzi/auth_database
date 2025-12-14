@@ -12,7 +12,6 @@
 
 #include <iomanip>
 #include "gRPC_Client.h"
-#include "sqlexception.h"
 #include "net.h"
 #include "logger.h"
 #include <fmt/format.h>

@@ -33,7 +33,6 @@
 #include <iostream>
 #include <string>
 
-#include "sqlexception.h"
 #include "authDB.h"
 using namespace std::chrono_literals;
 

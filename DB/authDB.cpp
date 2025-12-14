@@ -29,7 +29,6 @@
 #include <boost/tokenizer.hpp>
 #include "protofunctions.h"
 
-#include "sqlexception.h"
 #include "authDB.h"
 
 void AuthorizationDB::GetTypeList(const std::string &regKey, google::protobuf::RepeatedPtrField<AuthDatabaseProto::TypeRecord> *list) {

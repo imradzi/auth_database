@@ -24,7 +24,6 @@
 #include "auth_database.grpc.pb.h"
 #include <boost/uuid/uuid.hpp>
 #include "authDB.h"
-#include "sqlexception.h"
 #include "beast.h"
 
 #include "AuthChatService.h"

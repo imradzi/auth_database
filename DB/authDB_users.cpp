@@ -25,7 +25,6 @@
 #undef _USEPOSTGRESQL
 #endif
 
-#include "sqlexception.h"
 #include "authDB.h"
 #include "AuthChatService.h"
 #include "timefunctions.h"

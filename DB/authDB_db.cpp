@@ -26,7 +26,6 @@
 #undef _USEPOSTGRESQL
 #endif
 
-#include "sqlexception.h"
 #include "activityTrackkerDB.h"
 #include "authDB.h"
 #include <boost/uuid/random_generator.hpp>

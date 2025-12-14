@@ -16,7 +16,6 @@
 #include <filesystem>
 
 #include "authDB.h"
-#include "sqlexception.h"
 #include "beast.h"
 #include "logger.h"
 

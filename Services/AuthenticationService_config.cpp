@@ -20,7 +20,6 @@
 #include "authDB.h"
 #include "activityTrackkerDB.h"
 
-#include "sqlexception.h"
 #include "beast.h"
 
 #include "AuthenticationService.h"
