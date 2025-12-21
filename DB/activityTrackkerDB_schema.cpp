@@ -30,39 +30,6 @@
 
 std::vector<DB::DBObjects> ActivityTrackkerDB::objectList() const {
     std::vector<DB::DBObjects> list {
-        {"ul_keys", DB::Table,
-            {"create table <TABLENAME>("
-             "id integer primary key, "
-             "key text, "
-             "value text, "
-             "description text, "
-             "isDeleted integer, "
-             "unique(key) "
-             ")",
-                "create index idx_<TABLENAME>_key on <TABLENAME>(key)"}},
-
-        {"UL_LocalKeys", DB::Table,
-            {"create table <TABLENAME>("
-             "id integer primary key, "
-             "key text, "
-             "value text, "
-             "description text, "
-             "isDeleted integer, "
-             "unique(key) "
-             ")",
-                "create index idx_<TABLENAME>_key on <TABLENAME>(key)"}},
-
-        {"Types", DB::Table,
-            {"create table <TABLENAME>("
-             "id integer primary key, "
-             "parentID integer, "
-             "code text, "
-             "name text, "
-             "limitvalue text, "
-             "defaultvalue text, "
-             "isDeleted integer, "
-             "foreign key(parentID) references types(id)"
-             ")"}},
 
         {"entityFTS", DB::Table,
             {"create virtual table <TABLENAME> using FTS5(code, name, description, telephone, address, addressGroup, houseNo)"}},  // code is IC
