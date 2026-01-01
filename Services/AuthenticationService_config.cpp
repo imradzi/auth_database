@@ -23,7 +23,7 @@
 #include "beast.h"
 
 #include "AuthenticationService.h"
-#include "logger.h"
+#include "logger/logger.h"
 
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;

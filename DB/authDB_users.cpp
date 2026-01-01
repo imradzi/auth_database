@@ -186,14 +186,14 @@ int64_t AuthorizationDB::SaveUser(const AuthDatabaseProto::Session *session, con
         stt->ExecuteUpdate();
         x->SetOK();
     } catch (wpSQLException &e) {
+        LOG_ERROR("sql exception in RegisterEmail: {}", e.message);
         uid = 0;       
-        ShowLog(fmt::format("sql exception in RegisterEmail: {}", e.message));
     } catch (std::exception &e) {
+        LOG_ERROR("exception in RegisterEmail: {}", e.what());
         uid = 0;
-        ShowLog(fmt::format("exception in RegisterEmail: {}", e.what()));
     } catch (...) {
+        LOG_ERROR("unknown exception in RegisterEmail");
         uid = 0;
-        ShowLog("unknown exception in RegisterEmail");
     }
     if (uid > 0 && session != nullptr) {
         ShowLog("Sending message new user");
@@ -219,11 +219,11 @@ bool AuthorizationDB::SaveDependent(const AuthDatabaseProto::Session *session, c
             return true;
         }
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in RegisterEmail: {}", e.message));
+        LOG_ERROR("sql exception in RegisterEmail: {}", e.message);
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in RegisterEmail: {}", e.what()));
+        LOG_ERROR("exception in RegisterEmail: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in RegisterEmail");
+        LOG_ERROR("unknown exception in RegisterEmail");
     }
     return false;
 }

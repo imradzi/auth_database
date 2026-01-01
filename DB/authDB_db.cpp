@@ -139,11 +139,11 @@ std::string AuthorizationDB::RegisterDB(const AuthDatabaseProto::DBName *db, Cre
         ShowLog(fmt::format("RegisterDB: registered db in folder : {}", folderName));
         return folderName;
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in RegisterDB: {}", e.message));
+        LOG_ERROR("sql exception in RegisterDB: {}", e.message);
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in RegisterDB: {}", e.what()));
+        LOG_ERROR("exception in RegisterDB: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in RegisterDB ");
+        LOG_ERROR("unknown exception in RegisterDB");
     }
     return "";
 }
@@ -186,11 +186,11 @@ std::string AuthorizationDB::DeRegisterDB(const std::string &email, const AuthDa
         x->SetOK();
         return folderName;
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in DeRegisterDB: {}", e.message));
+        LOG_ERROR("sql exception in DeRegisterDB: {}", e.message);
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in DeRegisterDB: {}", e.what()));
+        LOG_ERROR("exception in DeRegisterDB: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in DeRegisterDB");
+        LOG_ERROR("unknown exception in DeRegisterDB");
     }
     return "";
 }
@@ -224,11 +224,11 @@ int AuthorizationDB::GetDBList(const std::string &email, const std::string &grou
         ShowLog(fmt::format("GetDBList for {} retuns {} ", email, response->size()));
         return response->size();
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in GetDBList: {}", e.message));
+        LOG_ERROR("sql exception in GetDBList: {}", e.message);
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in GetDBList: {}", e.what()));
+        LOG_ERROR("exception in GetDBList: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in GetDBList");
+        LOG_ERROR("unknown exception in GetDBList");
     }
     return 0;
 }
@@ -245,11 +245,11 @@ int AuthorizationDB::GetDBList(google::protobuf::RepeatedPtrField<AuthDatabasePr
         }
         return response->size();
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in GetDBList: {}", e.message));
+            LOG_ERROR("sql exception in GetDBList: {}", e.message);
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in GetDBList: {}", e.what()));
+        LOG_ERROR("exception in GetDBList: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in GetDBList");
+        LOG_ERROR("unknown exception in GetDBList");
     }
     return 0;
 }
@@ -289,11 +289,11 @@ bool AuthorizationDB::ShareDB(const std::string &email, const std::string &dbnam
         }
         return true;
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in ShareDB: {}", e.message));
+            LOG_ERROR("sql exception in ShareDB: {}", e.message);
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in ShareDB: {}", e.what()));
+        LOG_ERROR("exception in ShareDB: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in ShareDB");
+        LOG_ERROR("unknown exception in ShareDB");
     }
     return false;
 }

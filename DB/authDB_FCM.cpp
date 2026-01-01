@@ -75,8 +75,10 @@ std::tuple<std::string, std::string> executeCommand(const std::string& command, 
 
         proc.wait();
     } catch (const std::exception& e) {
+        LOG_ERROR("executeCommand exception: {}", e.what());
         return {"", e.what()};
     } catch (...) {
+        LOG_ERROR("executeCommand unknown exception");
         return {"", "Unknown error"};
     }
     return {output, error_output};
@@ -162,7 +164,7 @@ bool AuthorizationDB::SendNotification(const std::string& deviceToken, const std
 //     ShowLog(fmt::format("SendNotification - result: ", result));
 //     return true;
 // } catch (...) {
-//     ShowLog("SendNotification - unknown exception");
+//     LOG_ERROR("SendNotification - unknown exception");
 //     return false;
 // }
 

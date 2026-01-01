@@ -21,7 +21,7 @@
 #include "beast.h"
 
 #include "AuthenticationService.h"
-#include "logger.h"
+#include "logger/logger.h"
 
 std::tuple<bool, std::unique_ptr<AuthDatabaseProto::Session>, std::unique_ptr<AuthorizationDB>> AuthenticationService::ReadMetaData(const std::string& name, ::grpc::ServerContext* context, bool skipCheckEmailApproved, bool toValidateToken) {
     auto meta = context->client_metadata();

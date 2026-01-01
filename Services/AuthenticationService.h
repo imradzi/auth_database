@@ -11,7 +11,7 @@
 
 #include "authDB.h"
 #include "GetSession.h"
-#include "logger.h"
+#include "logger/logger.h"
 
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
@@ -49,11 +49,11 @@ public:
         try {
             return DoExecute(session.get(), request, response, fnCall, skipCheckEmailApproved, toValidateToken);
         } catch (wpSQLException& e) {
-            ShowLog(fmt::format("{}> sql exception: {}", name, e.message));
+            LOG_ERROR("{}> sql exception: {}", name, e.message);
         } catch (std::exception& e) {
-            ShowLog(fmt::format("{}> sql exception: {}", name, e.what()));
+            LOG_ERROR("{}> sql exception: {}", name, e.what());
         } catch (...) {
-            ShowLog(fmt::format("{}> unknown exception", name));
+            LOG_ERROR("{}> unknown exception", name);
         }
         return -1;
     }
@@ -72,13 +72,13 @@ public:
             }
             return ::grpc::Status::OK;
         } catch (wpSQLException& e) {
-            ShowLog(fmt::format("{}> sql exception: {}", name,e.message));
+            LOG_ERROR("{}> sql exception: {}", name,e.message);
             context->AddTrailingMetadata("error", e.message);
         } catch (std::exception& e) {
-            ShowLog(fmt::format("{}> sql exception: {}", name, e.what()));
+            LOG_ERROR("{}> sql exception: {}", name, e.what());
             context->AddTrailingMetadata("error", e.what());
         } catch (...) {
-            ShowLog(fmt::format("{}> unknown exception", name));
+            LOG_ERROR("{}> unknown exception", name);
             context->AddTrailingMetadata("error", "exception");
         }
         return ::grpc::Status::CANCELLED;

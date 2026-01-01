@@ -73,11 +73,11 @@ bool AuthorizationDB::DeRegisterDevice(const std::string &deviceToken) {
         }
         return true;
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in DeRegisterDevice by deviceToken: {}", e.message));
+        LOG_ERROR(fmt::format("sql exception in DeRegisterDevice by deviceToken: {}", e.message));
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in DeRegisterDevice by deviceToken: {}", e.what()));
+        LOG_ERROR(fmt::format("exception in DeRegisterDevice by deviceToken: {}", e.what()));
     } catch (...) {
-        ShowLog("unknown exception in DeRegisterDevice by deviceToken");
+        LOG_ERROR("unknown exception in DeRegisterDevice by deviceToken");
     }
     return false;
 }
@@ -89,11 +89,11 @@ bool AuthorizationDB::DeRegisterDevice(const AuthDatabaseProto::User *user) {
         stt->ExecuteUpdate();
         return true;
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in DeRegisterDevice by email: {}", e.message));
+        LOG_ERROR(fmt::format("sql exception in DeRegisterDevice by email: {}", e.message));
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in DeRegisterDevice by email: {}", e.what()));
+        LOG_ERROR(fmt::format("exception in DeRegisterDevice by email: {}", e.what()));
     } catch (...) {
-        ShowLog("unknown exception in DeRegisterDevice by email");
+        LOG_ERROR("unknown exception in DeRegisterDevice by email");
     }
     return false;
 }
@@ -121,11 +121,11 @@ std::string AuthorizationDB::RegisterEmail(const AuthDatabaseProto::Session *ses
         }
         return std::to_string(uid);
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in RegisterEmail: {}", e.message));
+        LOG_ERROR(fmt::format("sql exception in RegisterEmail: {}", e.message));
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in RegisterEmail: {}", e.what()));
+        LOG_ERROR(fmt::format("exception in RegisterEmail: {}", e.what()));
     } catch (...) {
-        ShowLog("unknown exception in RegisterEmail");
+        LOG_ERROR("unknown exception in RegisterEmail");
     }
     return "";
 }
@@ -137,11 +137,11 @@ void AuthorizationDB::SetApplicationName(const std::string &dbName, const std::s
         stt->Bind("@appname", appName);
         stt->ExecuteUpdate();
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in SetApplicationName: {}", e.message));
+        LOG_ERROR(fmt::format("sql exception in SetApplicationName: {}", e.message));
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in SetApplicationName: {}", e.what()));
+        LOG_ERROR(fmt::format("exception in SetApplicationName: {}", e.what()));
     } catch (...) {
-        ShowLog("unknown exception in SetApplicationName ");
+        LOG_ERROR("unknown exception in SetApplicationName ");
     }
 }
 
@@ -158,11 +158,11 @@ bool AuthorizationDB::ApproveEmail(const std::string &email) {
         stt->ExecuteUpdate();
         return true;
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in ApproveEmail: {}", e.message));
+        LOG_ERROR(fmt::format("sql exception in ApproveEmail: {}", e.message));
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in ApproveEmail: {}", e.what()));
+        LOG_ERROR(fmt::format("exception in ApproveEmail: {}", e.what()));
     } catch (...) {
-        ShowLog("unknown exception in ApproveEmail");
+        LOG_ERROR("unknown exception in ApproveEmail");
     }
     return false;
 }
@@ -180,11 +180,11 @@ bool AuthorizationDB::IsEmailApproved(const std::string &email) {
         }
         return true;
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in IsEmailApproved: {}", e.message));
+        LOG_ERROR(fmt::format("sql exception in IsEmailApproved: {}", e.message));
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in IsEmailApproved: {}", e.what()));
+        LOG_ERROR(fmt::format("exception in IsEmailApproved: {}", e.what()));
     } catch (...) {
-        ShowLog("unknown exception in IsEmailApproved");
+        LOG_ERROR("unknown exception in IsEmailApproved");
     }
     return false;
 }
@@ -202,11 +202,11 @@ bool AuthorizationDB::IsAuthorizer(const std::string &email) {
         if (!rs->NextRow()) return false;  // email not exists;
         return rs->Get<bool>(0);
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in IsAuthorizer: {}", e.message));
+        LOG_ERROR(fmt::format("sql exception in IsAuthorizer: {}", e.message));
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in IsAuthorizer: {}", e.what()));
+        LOG_ERROR(fmt::format("exception in IsAuthorizer: {}", e.what()));
     } catch (...) {
-        ShowLog("unknown exception in IsAuthorizer");
+        LOG_ERROR("unknown exception in IsAuthorizer");
     }
     return false;
 }
@@ -218,11 +218,11 @@ void AuthorizationDB::SetRole(const std::string &email, const std::string &roleI
         stt->Bind("@role", roleId);
         stt->ExecuteUpdate();
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in SetRole: {}", e.message));
+        LOG_ERROR(fmt::format("sql exception in SetRole: {}", e.message));
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in SetRole: {}", e.what()));
+        LOG_ERROR(fmt::format("exception in SetRole: {}", e.what()));
     } catch (...) {
-        ShowLog("unknown exception in SetRole");
+        LOG_ERROR("unknown exception in SetRole");
     }
 }
 
@@ -233,11 +233,11 @@ void AuthorizationDB::ClearRole(const std::string &email, const std::string &rol
         stt->Bind("@role", roleId);
         stt->ExecuteUpdate();
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in ClearRole: {}", e.message));
+        LOG_ERROR(fmt::format("sql exception in ClearRole: {}", e.message));
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in ClearRole: {}", e.what()));
+        LOG_ERROR(fmt::format("exception in ClearRole: {}", e.what()));
     } catch (...) {
-        ShowLog("unknown exception in ClearRole");
+        LOG_ERROR("unknown exception in ClearRole");
     }
 }
 
@@ -254,11 +254,11 @@ void AuthorizationDB::SetDBRole(const std::string &dbName, const std::string &em
         stt->Bind("@date", std::chrono::system_clock::now());
         stt->ExecuteUpdate();
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in SetDBRole: {}", e.message));
+        LOG_ERROR(fmt::format("sql exception in SetDBRole: {}", e.message));
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in SetDBRole: {}", e.what()));
+        LOG_ERROR(fmt::format("exception in SetDBRole: {}", e.what()));
     } catch (...) {
-        ShowLog("unknown exception in SetRole");
+        LOG_ERROR("unknown exception in SetRole");
     }
 }
 
@@ -274,11 +274,11 @@ void AuthorizationDB::ClearDBRole(const std::string &dbName, const std::string &
         stt->Bind("@role", roleId);
         stt->ExecuteUpdate();
     } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in ClearDBRole: {}", e.message));
+        LOG_ERROR(fmt::format("sql exception in ClearDBRole: {}", e.message));
     } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in ClearDBRole: {}", e.what()));
+        LOG_ERROR(fmt::format("exception in ClearDBRole: {}", e.what()));
     } catch (...) {
-        ShowLog("unknown exception in ClearDBRole");
+        LOG_ERROR("unknown exception in ClearDBRole");
     }
 }
 

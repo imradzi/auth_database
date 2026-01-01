@@ -20,7 +20,7 @@
 #include "auth_database.grpc.pb.h"
 #include "protofunctions.h"
 #include "GetSession.h"
-#include "logger.h"
+#include "logger/logger.h"
 
 static int GetInt(unsigned char c) {
     if (c >= '0' && c <= '9') return c - '0';

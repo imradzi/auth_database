@@ -17,7 +17,7 @@
 
 #include "authDB.h"
 #include "beast.h"
-#include "logger.h"
+#include "logger/logger.h"
 
 #include "AuthenticationService.h"
 
@@ -56,7 +56,7 @@ void StartService() {
             } else
                 ShowLog(fmt::format("PPOSAuth Service fail to start on {url}", fmt::arg("url", url)));
         } catch (std::exception& e) {
-            ShowLog(e.what());
+            LOG_ERROR("StartService exception: {}", e.what());
         }
     });
     _local.detach();
@@ -152,10 +152,10 @@ int main(int argc, char* argv[]) {
         authDb->SetRole("imradzi@gmail.com", authDb->GetRegistry()->GetKey("uRoles_Authorizer"));
         ShowLog(fmt::format("authorize email returns ", res);
     } catch (wpSQLException& e) {
-        ShowLog(fmt::format("Error starting the db: ", e.message);
+        LOG_ERROR("Error starting the db: {}", e.message);
         return 1;
     } catch (std::exception& e) {
-        ShowLog(fmt::format("Error starting the db: ", e.what());
+        LOG_ERROR("Error starting the db: {}", e.what());
         return 1;
     }
 

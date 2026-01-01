@@ -13,7 +13,7 @@
 #include <iomanip>
 #include "gRPC_Client.h"
 #include "net.h"
-#include "logger.h"
+#include "logger/logger.h"
 #include <fmt/format.h>
 #include <memory>
 
@@ -39,8 +39,8 @@ PPOSClient::PPOSClient(bool keepAlive, const std::string &host, int pno) : keepC
         companyStub = PPOS::Company::NewStub(grpcChannel);
         reportStub = PPOS::Report::NewStub(grpcChannel);
     } catch (std::exception &e) {
-        ShowLog(fmt::format("AuthClient constructor: grpc exception: {}", e.what()));
+        LOG_ERROR(fmt::format("AuthClient constructor: grpc exception: {}", e.what()));
     } catch (...) {
-        ShowLog("AuthClient constructor: unknown exception..");
+        LOG_ERROR("AuthClient constructor: unknown exception..");
     }
 }

@@ -21,7 +21,7 @@
 #include "beast.h"
 
 #include "AuthenticationService.h"
-#include "logger.h"
+#include "logger/logger.h"
 
 ::grpc::Status AuthenticationService::RegisterSession(::grpc::ServerContext* context, const AuthDatabaseProto::User* request, AuthDatabaseProto::User* response) {
     ShowLog("Register Session....");
