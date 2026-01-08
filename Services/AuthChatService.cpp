@@ -48,7 +48,7 @@ MQ::EventHandler<MQ::Queue<AuthChatProto::ServerEventMessage>, AuthChatProto::Se
 });
 
 void MonitorChatList() {
-    while (!isShuttingDown) {
+    while (!isShuttingDown.load(std::memory_order_acquire)) {
         globalMessage.removeExpired();
         std::this_thread::yield();
         std::this_thread::sleep_for(300ms);
@@ -74,7 +74,7 @@ static bool disableChat = false;
     writer->Write(event);
     auto sess = globalMessage.getSession(queueKey).lock();
     sess->set_chat_key(queueKey);
-    while (!isShuttingDown) {
+    while (!isShuttingDown.load(std::memory_order_acquire)) {
         std::this_thread::yield();
         auto queue = globalMessage.getQ(queueKey).lock();
         if (!queue) break;  // chat deleted.

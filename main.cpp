@@ -79,23 +79,23 @@ BOOL WINAPI ConsoleHandler(DWORD event) {
     switch (event) {
         case CTRL_C_EVENT:
             ShowLog("CTRL-C pressed");
-            rc = isShuttingDown = true;
+            isShuttingDown.store(rc=true, std::memory_order_release);
             break;
         case CTRL_BREAK_EVENT:
             ShowLog("CTRL-BREAK pressed");
-            rc = isShuttingDown = true;
+            isShuttingDown.store(rc=true, std::memory_order_release);
             break;
         case CTRL_CLOSE_EVENT:
             ShowLog("Window is closing");
-            rc = isShuttingDown = true;
+            isShuttingDown.store(rc=true, std::memory_order_release);
             break;
         case CTRL_LOGOFF_EVENT:
             ShowLog("User is logging off");
-            rc = isShuttingDown = true;
+            isShuttingDown.store(rc=true, std::memory_order_release);
             break;
         case CTRL_SHUTDOWN_EVENT:
             ShowLog("System is shutting down");
-            rc = isShuttingDown = true;
+            isShuttingDown.store(rc=true, std::memory_order_release);
             break;
     }
     return rc;
@@ -107,15 +107,15 @@ void ConsoleHandler(int signal) {
     switch (signal) {
         case SIGABRT:
             ShowLog("SIGABRT received");
-            isShuttingDown = true;
+            isShuttingDown.store(true, std::memory_order_release);
             break;
         case SIGTERM:
             ShowLog("SIGTERM received");
-            isShuttingDown = true;
+            isShuttingDown.store(true, std::memory_order_release);
             break;
         case SIGINT:
             ShowLog("SIGINT received");
-            isShuttingDown = true;
+            isShuttingDown.store(true, std::memory_order_release);
             break;
         default:
             ShowLog("SIGNAL " + std::to_string(signal));
@@ -160,7 +160,7 @@ int main(int argc, char* argv[]) {
 
     StartWebServer("0.0.0.0", webPortNo, "www", 3, "chain.pem", "private.pem", "");  // 1 worker thread for web call
     StartService();
-    while (!isShuttingDown) {
+    while (!isShuttingDown.load(std::memory_order_acquire)) {
         std::this_thread::yield();
         std::this_thread::sleep_for(200ms);
     }
