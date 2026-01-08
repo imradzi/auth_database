@@ -138,7 +138,6 @@ int main(int argc, char* argv[]) {
         ShowLog("SQLite3 version " << sqlite3_version);
         auto authDb = std::make_unique<AuthorizationDB>();
         authDb->Open(true);
-        authDb->CheckSchemaAndRestructure();
 
         auto user = AuthDatabaseProto::User();
         user.set_email("imradzi@gmail.com");
