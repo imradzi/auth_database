@@ -55,6 +55,12 @@ void MonitorChatList() {
     }
 }
 
+void ShutdownAllChats() {
+    ShowLog("ShutdownAllChats: closing all active chat queues...");
+    globalMessage.closeAll();
+    ShowLog("ShutdownAllChats: done.");
+}
+
 static bool disableChat = false;
 
 ::grpc::Status AuthChatService::StartChat(::grpc::ServerContext* context, const ::AuthDatabaseProto::Config* request, ::grpc::ServerWriter<::AuthChatProto::ServerEventMessage>* writer) {
