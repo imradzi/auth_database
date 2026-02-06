@@ -88,7 +88,8 @@ bool AuthorizationDB::CheckClientToken(const std::string& idToken, const std::st
     LOG_INFO("email: {}", email);
     LOG_INFO("token: {}", idToken);
     auto [result, err] = executeCommand("/usr/local/bin/checktoken", {GetRegistry()->GetKey("app_firebase_admin_credential_json_file")}, {idToken});
-    LOG_INFO("CheckClientToken - result: {}, email: {}, error: [{}]", result, email, err);
+    if (!err.empty()) LOG_ERROR("CheckClientToken - result: {}, email: {}, error: [{}]", result, email, err);
+    else LOG_INFO("CheckClientToken - result: {}, email: {}", result, email);
     return boost::iequals(boost::trim_copy(result), boost::trim_copy(email));
 }
     // -------to rewrite using boost::asio::process
@@ -136,7 +137,7 @@ bool AuthorizationDB::SendNotification(const std::string& deviceToken, const std
         LOG_INFO("SendNotification - result: {}", result);
         return true;
     }
-    LOG_INFO("SendNotification - result failed: ", errString);
+    LOG_ERROR("SendNotification - result failed: ", errString);
     return false;
 }
 // -------to rewrite using boost::asio::process

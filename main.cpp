@@ -54,7 +54,7 @@ void StartService() {
                 LOG_INFO("PPOSAuth Service started on {url}", fmt::arg("url", url);
                 doc_service_thread->Wait();
             } else
-                LOG_INFO("PPOSAuth Service fail to start on {url}", fmt::arg("url", url);
+                LOG_ERROR("PPOSAuth Service fail to start on {url}", fmt::arg("url", url);
         } catch (std::exception& e) {
             LOG_ERROR("StartService exception: {}", e.what());
         }
@@ -118,7 +118,7 @@ void ConsoleHandler(int signal) {
             isShuttingDown.store(true, std::memory_order_release);
             break;
         default:
-            LOG_INFO("SIGNAL " + std::to_string(signal);
+            LOG_INFO("SIGNAL {}", std::to_string(signal);
     }
 }
 #endif
