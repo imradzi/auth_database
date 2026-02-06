@@ -28,6 +28,7 @@
 
 #include "activityTrackkerDB.h"
 #include "authDB.h"
+#include "guid.h"
 #include <boost/uuid/random_generator.hpp>
 extern boost::uuids::random_generator_mt19937 uuidGen;
 
@@ -64,7 +65,7 @@ std::string AuthorizationDB::RegisterDB(const AuthDatabaseProto::DBName *db, Cre
         if (rs->NextRow()) return rs->Get(0);
         return "";
     };
-    ShowLog(fmt::format("RegisterDB: name={}, app={}, privacyId={}", db->db_name(), db->app_name(), db->privacy_type().id()));
+    LOG_INFO("RegisterDB: name={}, app={}, privacyId={}", db->db_name(), db->app_name(), db->privacy_type().id());
     try {
         auto x = GetSession().GetAutoCommitter();
         std::string dbName;
@@ -82,7 +83,7 @@ std::string AuthorizationDB::RegisterDB(const AuthDatabaseProto::DBName *db, Cre
             stt->Bind("@dbname", dbName);
             auto rs = stt->ExecuteQuery();
             if (rs->NextRow()) {
-                ShowLog("RegisterDB: db.dbname already exists");
+                LOG_INFO("RegisterDB: db.dbname already exists");
                 return "";
             }  // already registered
         }
@@ -106,7 +107,7 @@ std::string AuthorizationDB::RegisterDB(const AuthDatabaseProto::DBName *db, Cre
         stt->Bind("@email", db->owner_email());
         auto rs = stt->ExecuteQuery();
         if (!rs->NextRow()) {
-            ShowLog(fmt::format("RegisterDB: user {} not registered.", db->owner_email()));
+            LOG_INFO("RegisterDB: user {} not registered.", db->owner_email());
             return "";
         }
         auto uid = rs->Get<int64_t>(0);
@@ -136,7 +137,7 @@ std::string AuthorizationDB::RegisterDB(const AuthDatabaseProto::DBName *db, Cre
             }
         }
         x->SetOK();
-        ShowLog(fmt::format("RegisterDB: registered db in folder : {}", folderName));
+        LOG_INFO("RegisterDB: registered db in folder : {}", folderName);
         return folderName;
     } catch (wpSQLException &e) {
         LOG_ERROR("sql exception in RegisterDB: {}", e.message);
@@ -221,7 +222,7 @@ int AuthorizationDB::GetDBList(const std::string &email, const std::string &grou
             dbName->set_app_name(rs->Get(6));
             dbName->set_group_filter(rs->Get(7));
         }
-        ShowLog(fmt::format("GetDBList for {} retuns {} ", email, response->size()));
+        LOG_INFO("GetDBList for {} retuns {} ", email, response->size());
         return response->size();
     } catch (wpSQLException &e) {
         LOG_ERROR("sql exception in GetDBList: {}", e.message);

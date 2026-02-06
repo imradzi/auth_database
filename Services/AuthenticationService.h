@@ -45,7 +45,7 @@ public:
     template<typename Request, typename Response>
     int Execute(const char *name, boost::beast::string_view sessionString, const Request* request, Response* response, std::function<bool(::AuthDatabaseProto::Session* session, AuthorizationDB*, const Request *, Response*)> fnCall, bool skipCheckEmailApproved=false, bool toValidateToken=false) {
         auto session = ::GetSession(sessionString);
-        ShowLog(fmt::format("{}> started -> session: email: {}, name:{}, telNo: {}, db:{}, appName:{}", name, session->user().email(), session->user().name(), session->user().tel_no(), session->db_name(), session->app_name()));
+        LOG_INFO("{}> started -> session: email: {}, name:{}, telNo: {}, db:{}, appName:{}", name, session->user().email(), session->user().name(), session->user().tel_no(), session->db_name(), session->app_name());
         try {
             return DoExecute(session.get(), request, response, fnCall, skipCheckEmailApproved, toValidateToken);
         } catch (wpSQLException& e) {

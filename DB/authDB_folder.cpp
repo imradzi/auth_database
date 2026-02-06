@@ -27,6 +27,7 @@
 #endif
 
 #include "authDB.h"
+#include "guid.h"
 #include "logger/logger.h"
 
 #include <boost/uuid/random_generator.hpp>

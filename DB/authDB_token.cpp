@@ -30,7 +30,7 @@
 using namespace std::chrono_literals;
 
 bool AuthorizationDB::IsClientTokenExists(const std::string& email) {
-    ShowLog("AuthorizationDB::IsClientTokenExists - enter");
+    LOG_INFO("AuthorizationDB::IsClientTokenExists - enter");
     auto stt = GetSession().PrepareStatement("delete from idTokens where dateChecked < ?");
     stt->Bind(1, std::chrono::system_clock::now() - 24h);
     stt->ExecuteUpdate();
@@ -52,10 +52,10 @@ bool AuthorizationDB::IsValidClientToken(const std::string& token, const std::st
         stt->Bind("@email", email);
         stt->Bind("@date", std::chrono::system_clock::now());
         stt->ExecuteUpdate();
-        ShowLog("AuthorizationDB::IsValidClientToken - update the cache");
+        LOG_INFO("AuthorizationDB::IsValidClientToken - update the cache");
         return true;
     }
-    ShowLog(fmt::format("CheckClientToken - return FALSE (email={})", email));
+    LOG_INFO("CheckClientToken - return FALSE (email={})", email);
     return false;
 }
 

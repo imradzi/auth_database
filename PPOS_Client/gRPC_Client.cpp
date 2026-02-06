@@ -39,7 +39,7 @@ PPOSClient::PPOSClient(bool keepAlive, const std::string &host, int pno) : keepC
         companyStub = PPOS::Company::NewStub(grpcChannel);
         reportStub = PPOS::Report::NewStub(grpcChannel);
     } catch (std::exception &e) {
-        LOG_ERROR(fmt::format("AuthClient constructor: grpc exception: {}", e.what()));
+        LOG_ERROR("AuthClient constructor: grpc exception: {}", e.what());
     } catch (...) {
         LOG_ERROR("AuthClient constructor: unknown exception..");
     }

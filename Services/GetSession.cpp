@@ -53,7 +53,7 @@ static void DumpBuffer(const unsigned char* buf, int len) {
         ss << std::ios::hex << int(*buf) << ",";
     }
     ss << "\n";
-    ShowLog(ss.str());
+    LOG_INFO(ss.str());
 }
 
 constexpr bool toDump = false;

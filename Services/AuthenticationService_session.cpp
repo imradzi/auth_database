@@ -24,18 +24,18 @@
 #include "logger/logger.h"
 
 ::grpc::Status AuthenticationService::RegisterSession(::grpc::ServerContext* context, const AuthDatabaseProto::User* request, AuthDatabaseProto::User* response) {
-    ShowLog("Register Session....");
+    LOG_INFO("Register Session....");
     return Execute<AuthDatabaseProto::User, AuthDatabaseProto::User>("RegisterSession", context, request, response, [](AuthDatabaseProto::Session* session, AuthorizationDB* db, const AuthDatabaseProto::User* req, AuthDatabaseProto::User* r) -> bool {
         *r = *req;
         db->RegisterEmail(session, r, session->device_token(), session->app_name(), session->chat_key());
         db->GetUser(*session, r);
-        ShowLog(fmt::format("RegisterSession> return user: ", Protobuf::ToJSON(*r)));
+        LOG_INFO("RegisterSession> return user: {}", Protobuf::ToJSON(*r));
         return true; 
     }, true);
 }
 
 ::grpc::Status AuthenticationService::UnRegisterSession(::grpc::ServerContext* context, const AuthDatabaseProto::User* request, AuthDatabaseProto::BoolValue* response) {
-    ShowLog("Removing UnRegister Session....");
+    LOG_INFO("Removing UnRegister Session....");
     return Execute<AuthDatabaseProto::User, AuthDatabaseProto::BoolValue>("UnRegisterSession", context, request, response, [](AuthDatabaseProto::Session* session, AuthorizationDB* db, const AuthDatabaseProto::User* req, AuthDatabaseProto::BoolValue* r) -> bool {
         db->DeRegisterDevice(session->device_token());
         r->set_value(true);
@@ -44,7 +44,7 @@
 }
 
 ::grpc::Status AuthenticationService::UnRegisterAllSession(::grpc::ServerContext* context, const AuthDatabaseProto::User* request, AuthDatabaseProto::BoolValue* response) {
-    ShowLog("Removing UnRegister All Session....");
+    LOG_INFO("Removing UnRegister All Session....");
     return Execute<AuthDatabaseProto::User, AuthDatabaseProto::BoolValue>("UnRegisterAllSession", context, request, response, [](AuthDatabaseProto::Session* session, AuthorizationDB* db, const AuthDatabaseProto::User* req, AuthDatabaseProto::BoolValue* r) -> bool {
         db->DeRegisterDevice(req);
         r->set_value(true);

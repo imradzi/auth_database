@@ -37,7 +37,7 @@ namespace fs = std::filesystem;
 ::grpc::Status AuthenticationService::GetDBList(::grpc::ServerContext* context, const AuthDatabaseProto::DBList* request, AuthDatabaseProto::DBList* response) {
     return Execute<AuthDatabaseProto::DBList, AuthDatabaseProto::DBList>("GetDBList", context, request, response, [](AuthDatabaseProto::Session* session, AuthorizationDB* db, const AuthDatabaseProto::DBList* req, AuthDatabaseProto::DBList* r) -> bool {
         db->GetDBList(session->user().email(), session->group_filter(), r->mutable_list());
-        ShowLog(fmt::format("AuthenticationService::GetDBList> email:{} >> no of databases: ", session->user().email(), r->list_size()));
+        LOG_INFO("AuthenticationService::GetDBList> email:{} >> no of databases: ", session->user().email(), r->list_size());
         return true;
     });
 }

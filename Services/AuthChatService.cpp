@@ -43,7 +43,7 @@ MQ::EventHandler<MQ::Queue<AuthChatProto::ServerEventMessage>, AuthChatProto::Se
     auto m = event.add_messages();
     m->set_key("chat_killed");
     m->set_value(queueKey);
-    ShowLog(fmt::format("Sending kill event for {}", queueKey));
+    LOG_INFO("Sending kill event for {}", queueKey);
     return event;
 });
 
@@ -56,9 +56,9 @@ void MonitorChatList() {
 }
 
 void ShutdownAllChats() {
-    ShowLog("ShutdownAllChats: closing all active chat queues...");
+    LOG_INFO("ShutdownAllChats: closing all active chat queues...");
     globalMessage.closeAll();
-    ShowLog("ShutdownAllChats: done.");
+    LOG_INFO("ShutdownAllChats: done.");
 }
 
 static bool disableChat = false;
@@ -69,7 +69,7 @@ static bool disableChat = false;
     auto [isOk, session, authDb] = AuthenticationService::ReadMetaData("Arham::StartChat", context, false);
 
     auto queueKey = globalMessage.add(*session);  // need to know which config on which queue so that can send notification based on db/user/
-    ShowLog(fmt::format("AuthChatService::StartChat: started: {}", queueKey));
+    LOG_INFO("AuthChatService::StartChat: started: {}", queueKey);
 
     // inform client of the chat key;
     AuthChatProto::ServerEventMessage event;
@@ -94,20 +94,20 @@ static bool disableChat = false;
         }
     }
     globalMessage.remove(queueKey);
-    ShowLog(fmt::format("AuthChatService::StartChat:{} stopped", queueKey));
+    LOG_INFO("AuthChatService::StartChat:{} stopped", queueKey);
     return isOk ? grpc::Status::OK : grpc::Status::CANCELLED;
 }
 
 ::grpc::Status AuthChatService::StopChat(::grpc::ServerContext* context, const google::protobuf::Empty* request, google::protobuf::Empty* response) {
     auto [isOk, session, authDb] = AuthenticationService::ReadMetaData("Arham::StopChat", context, false);
-    ShowLog(fmt::format("AuthChatService::StopChat: {} stopping", session->chat_key()));
+    LOG_INFO("AuthChatService::StopChat: {} stopping", session->chat_key());
     globalMessage.remove(session->chat_key());
     return grpc::Status::OK;
 }
 
 ::grpc::Status AuthChatService::KeepAlive(::grpc::ServerContext* context, const ::AuthChatProto::KeepAliveMessage* request, google::protobuf::Empty* response) {
     auto [isOk, session, authDb] = AuthenticationService::ReadMetaData("Arham::KeepAlive", context, false);
-    ShowLog(fmt::format("AuthChatService: keeping {} alive for next {} minutes", session->chat_key(), request->duration()));
+    LOG_INFO("AuthChatService: keeping {} alive for next {} minutes", session->chat_key(), request->duration());
     if (request->duration() <= 0)
         globalMessage.setExpiry(session->chat_key(), std::chrono::system_clock::now() + MQ::intervalToExpire);
     else
@@ -133,7 +133,7 @@ MessageSender::~MessageSender() {
             while (true) {
                 auto msgQ = globalMessage.getQ(originator.chat_key()).lock();
                 if (!msgQ) break;
-                ShowLog("MessageSender::sending final message.");
+                LOG_INFO("MessageSender::sending final message.");
                 if (msgQ->send(msg) == MQ::OK) break;
                 if (std::chrono::system_clock::now() - start > 60s) {
                     break;  // give up trying after 60 secs.
