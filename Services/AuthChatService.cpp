@@ -28,6 +28,7 @@
 
 #include "AuthChatService.h"
 #include "logger/logger.h"
+#include "WakeableSleeper.h"
 
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
@@ -35,7 +36,7 @@ namespace fs = std::filesystem;
 // kena ada MessageQueue global vector which has folder/dbname to allow message to sent to the same db
 // and session -> so that is only for same user -> also check email
 
-std::atomic<bool> isShuttingDown {false};
+ObservableAtomic isShuttingDown {false};
 
 MQ::EventHandler<MQ::Queue<AuthChatProto::ServerEventMessage>, AuthChatProto::ServerEventMessage, AuthDatabaseProto::Session> globalMessage([](const std::string& queueKey) {
     AuthChatProto::ServerEventMessage event;
@@ -48,7 +49,7 @@ MQ::EventHandler<MQ::Queue<AuthChatProto::ServerEventMessage>, AuthChatProto::Se
 });
 
 void MonitorChatList() {
-    while (!isShuttingDown.load(std::memory_order_acquire)) {
+    while (!isShuttingDown.load()) {
         globalMessage.removeExpired();
         std::this_thread::yield();
         std::this_thread::sleep_for(300ms);
@@ -80,7 +81,7 @@ static bool disableChat = false;
     writer->Write(event);
     auto sess = globalMessage.getSession(queueKey).lock();
     sess->set_chat_key(queueKey);
-    while (!isShuttingDown.load(std::memory_order_acquire)) {
+    while (!isShuttingDown.load()) {
         std::this_thread::yield();
         auto queue = globalMessage.getQ(queueKey).lock();
         if (!queue) break;  // chat deleted.

@@ -20,7 +20,8 @@
 #include "logger/logger.h"
 
 #include "AuthenticationService.h"
-
+#include "WakeableSleeper.h
+"
 boost::uuids::random_generator_mt19937 uuidGen;
 
 unsigned int portNumber = AuthDatabaseProto::ServerSetting::GRPCPortNo;
@@ -71,7 +72,7 @@ void StopService() {
     LOG_INFO("PPOSAuth Service - stopped.");
 }
 
-extern std::atomic<bool> isShuttingDown {false};
+ObservableAtomic isShuttingDown {false};
 
 #ifdef _WIN32
 BOOL WINAPI ConsoleHandler(DWORD event) {
@@ -79,23 +80,23 @@ BOOL WINAPI ConsoleHandler(DWORD event) {
     switch (event) {
         case CTRL_C_EVENT:
             LOG_INFO("CTRL-C pressed");
-            isShuttingDown.store(rc=true, std::memory_order_release);
+            isShuttingDown.store(rc=true);
             break;
         case CTRL_BREAK_EVENT:
             LOG_INFO("CTRL-BREAK pressed");
-            isShuttingDown.store(rc=true, std::memory_order_release);
+            isShuttingDown.store(rc=true);
             break;
         case CTRL_CLOSE_EVENT:
             LOG_INFO("Window is closing");
-            isShuttingDown.store(rc=true, std::memory_order_release);
+            isShuttingDown.store(rc=true);
             break;
         case CTRL_LOGOFF_EVENT:
             LOG_INFO("User is logging off");
-            isShuttingDown.store(rc=true, std::memory_order_release);
+            isShuttingDown.store(rc=true);
             break;
         case CTRL_SHUTDOWN_EVENT:
             LOG_INFO("System is shutting down");
-            isShuttingDown.store(rc=true, std::memory_order_release);
+            isShuttingDown.store(rc=true);
             break;
     }
     return rc;
@@ -107,15 +108,15 @@ void ConsoleHandler(int signal) {
     switch (signal) {
         case SIGABRT:
             LOG_INFO("SIGABRT received");
-            isShuttingDown.store(true, std::memory_order_release);
+            isShuttingDown.store(true);
             break;
         case SIGTERM:
             LOG_INFO("SIGTERM received");
-            isShuttingDown.store(true, std::memory_order_release);
+            isShuttingDown.store(true);
             break;
         case SIGINT:
             LOG_INFO("SIGINT received");
-            isShuttingDown.store(true, std::memory_order_release);
+            isShuttingDown.store(true);
             break;
         default:
             LOG_INFO("SIGNAL {}", std::to_string(signal);
@@ -160,7 +161,7 @@ int main(int argc, char* argv[]) {
 
     StartWebServer("0.0.0.0", webPortNo, "www", 3, "chain.pem", "private.pem", "");  // 1 worker thread for web call
     StartService();
-    while (!isShuttingDown.load(std::memory_order_acquire)) {
+    while (!isShuttingDown.load()) {
         std::this_thread::yield();
         std::this_thread::sleep_for(200ms);
     }
