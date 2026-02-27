@@ -49,10 +49,9 @@ MQ::EventHandler<MQ::Queue<AuthChatProto::ServerEventMessage>, AuthChatProto::Se
 });
 
 void MonitorChatList() {
-    while (!isShuttingDown.load()) {
+    WakeableSleeper sleeper({{&isShuttingDown, true}});
+    while (sleeper.sleep_for(5s)) {
         globalMessage.removeExpired();
-        std::this_thread::yield();
-        std::this_thread::sleep_for(300ms);
     }
 }
 
