@@ -52,9 +52,7 @@ std::tuple<bool, std::unique_ptr<AuthDatabaseProto::Session>, std::unique_ptr<Au
             return {false, nullptr, nullptr};
         }
         return {false, nullptr, nullptr};
-    } catch (wpSQLException& e) {
-        context->AddTrailingMetadata("error", e.message);
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         context->AddTrailingMetadata("error", e.what());
     } catch (...) {
         context->AddTrailingMetadata("error", "exception");

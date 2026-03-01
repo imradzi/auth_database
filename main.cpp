@@ -56,7 +56,7 @@ void StartService() {
                 doc_service_thread->Wait();
             } else
                 LOG_ERROR("PPOSAuth Service fail to start on {url}", fmt::arg("url", url);
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             LOG_ERROR("StartService exception: {}", e.what());
         }
     });
@@ -151,10 +151,7 @@ int main(int argc, char* argv[]) {
         authDb->SetRole("imradzi@gmail.com", authDb->GetRegistry()->GetKey("uRoles_CreateDB"));
         authDb->SetRole("imradzi@gmail.com", authDb->GetRegistry()->GetKey("uRoles_Authorizer"));
         LOG_INFO("authorize email returns ", res);
-    } catch (wpSQLException& e) {
-        LOG_ERROR("Error starting the db: {}", e.message);
-        return 1;
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         LOG_ERROR("Error starting the db: {}", e.what());
         return 1;
     }

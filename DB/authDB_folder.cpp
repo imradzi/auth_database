@@ -47,9 +47,7 @@ std::string AuthorizationDB::GetFolderNameInternal(const std::string &dbName) {
         if (rs->NextRow()) {
             return rs->Get(0);
         }
-    } catch (wpSQLException &e) {
-        LOG_ERROR("sql exception in GetFolderNameInternal: {}", e.message);
-    } catch (std::exception &e) {
+    } catch (const std::exception &e) {
         LOG_ERROR("exception in GetFolderNameInternal: {}", e.what());
     } catch (...) {
         LOG_ERROR("unknown exception in GetFolderNameInternal");
@@ -63,9 +61,7 @@ std::string AuthorizationDB::GetFolderName(const std::string &dbName) {
         authDb->Open();
         return authDb->GetFolderNameInternal(dbName);
 
-    } catch (wpSQLException &e) {
-        LOG_ERROR("sql exception in GetFolderName: {}", e.message);
-    } catch (std::exception &e) {
+    } catch (const std::exception &e) {
         LOG_ERROR("exception in GetFolderName: {}", e.what());
     } catch (...) {
         LOG_ERROR("unknown exception in GetFolderName");

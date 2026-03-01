@@ -185,10 +185,7 @@ int64_t AuthorizationDB::SaveUser(const AuthDatabaseProto::Session *session, con
         stt->Bind("@timeAccepted", timeAccepted);
         stt->ExecuteUpdate();
         x->SetOK();
-    } catch (wpSQLException &e) {
-        LOG_ERROR("sql exception in RegisterEmail: {}", e.message);
-        uid = 0;       
-    } catch (std::exception &e) {
+    } catch (const std::exception &e) {
         LOG_ERROR("exception in RegisterEmail: {}", e.what());
         uid = 0;
     } catch (...) {
@@ -218,9 +215,7 @@ bool AuthorizationDB::SaveDependent(const AuthDatabaseProto::Session *session, c
             stt->ExecuteUpdate();
             return true;
         }
-    } catch (wpSQLException &e) {
-        LOG_ERROR("sql exception in RegisterEmail: {}", e.message);
-    } catch (std::exception &e) {
+    } catch (const std::exception &e) {
         LOG_ERROR("exception in RegisterEmail: {}", e.what());
     } catch (...) {
         LOG_ERROR("unknown exception in RegisterEmail");

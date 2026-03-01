@@ -139,9 +139,7 @@ std::string AuthorizationDB::RegisterDB(const AuthDatabaseProto::DBName *db, Cre
         x->SetOK();
         LOG_INFO("RegisterDB: registered db in folder : {}", folderName);
         return folderName;
-    } catch (wpSQLException &e) {
-        LOG_ERROR("sql exception in RegisterDB: {}", e.message);
-    } catch (std::exception &e) {
+    } catch (const std::exception &e) {
         LOG_ERROR("exception in RegisterDB: {}", e.what());
     } catch (...) {
         LOG_ERROR("unknown exception in RegisterDB");
@@ -186,9 +184,7 @@ std::string AuthorizationDB::DeRegisterDB(const std::string &email, const AuthDa
         }
         x->SetOK();
         return folderName;
-    } catch (wpSQLException &e) {
-        LOG_ERROR("sql exception in DeRegisterDB: {}", e.message);
-    } catch (std::exception &e) {
+    } catch (const std::exception &e) {
         LOG_ERROR("exception in DeRegisterDB: {}", e.what());
     } catch (...) {
         LOG_ERROR("unknown exception in DeRegisterDB");
@@ -224,9 +220,7 @@ int AuthorizationDB::GetDBList(const std::string &email, const std::string &grou
         }
         LOG_INFO("GetDBList for {} retuns {} ", email, response->size());
         return response->size();
-    } catch (wpSQLException &e) {
-        LOG_ERROR("sql exception in GetDBList: {}", e.message);
-    } catch (std::exception &e) {
+    } catch (const std::exception &e) {
         LOG_ERROR("exception in GetDBList: {}", e.what());
     } catch (...) {
         LOG_ERROR("unknown exception in GetDBList");
@@ -245,9 +239,7 @@ int AuthorizationDB::GetDBList(google::protobuf::RepeatedPtrField<AuthDatabasePr
             dbName->set_app_name(rs->Get(2));
         }
         return response->size();
-    } catch (wpSQLException &e) {
-            LOG_ERROR("sql exception in GetDBList: {}", e.message);
-    } catch (std::exception &e) {
+    } catch (const std::exception &e) {
         LOG_ERROR("exception in GetDBList: {}", e.what());
     } catch (...) {
         LOG_ERROR("unknown exception in GetDBList");
@@ -289,9 +281,7 @@ bool AuthorizationDB::ShareDB(const std::string &email, const std::string &dbnam
             stt->ExecuteUpdate();
         }
         return true;
-    } catch (wpSQLException &e) {
-            LOG_ERROR("sql exception in ShareDB: {}", e.message);
-    } catch (std::exception &e) {
+    } catch (const std::exception &e) {
         LOG_ERROR("exception in ShareDB: {}", e.what());
     } catch (...) {
         LOG_ERROR("unknown exception in ShareDB");

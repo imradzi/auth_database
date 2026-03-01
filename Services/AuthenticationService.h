@@ -48,9 +48,7 @@ public:
         LOG_INFO("{}> started -> session: email: {}, name:{}, telNo: {}, db:{}, appName:{}", name, session->user().email(), session->user().name(), session->user().tel_no(), session->db_name(), session->app_name());
         try {
             return DoExecute(session.get(), request, response, fnCall, skipCheckEmailApproved, toValidateToken);
-        } catch (wpSQLException& e) {
-            LOG_ERROR("{}> sql exception: {}", name, e.message);
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             LOG_ERROR("{}> sql exception: {}", name, e.what());
         } catch (...) {
             LOG_ERROR("{}> unknown exception", name);
@@ -71,10 +69,7 @@ public:
                 context->AddTrailingMetadata("error-code", "-2");
             }
             return ::grpc::Status::OK;
-        } catch (wpSQLException& e) {
-            LOG_ERROR("{}> sql exception: {}", name,e.message);
-            context->AddTrailingMetadata("error", e.message);
-        } catch (std::exception& e) {
+        } catch (const std::exception& e) {
             LOG_ERROR("{}> sql exception: {}", name, e.what());
             context->AddTrailingMetadata("error", e.what());
         } catch (...) {
