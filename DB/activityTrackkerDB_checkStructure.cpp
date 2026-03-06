@@ -26,7 +26,6 @@
 #undef _USEPOSTGRESQL
 #endif
 #include "activityTrackkerDB.h"
-
 void ActivityTrackkerDB::CheckStructure() {
     DB::SQLiteBase::CheckStructure();
     auto x = GetSession().GetAutoCommitter();
