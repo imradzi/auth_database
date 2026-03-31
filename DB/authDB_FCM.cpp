@@ -85,12 +85,42 @@ std::tuple<std::string, std::string> executeCommand(const std::string& command, 
 }
 
 bool AuthorizationDB::CheckClientToken(const std::string& idToken, const std::string& email) {
-    LOG_INFO("email: {}", email);
-    LOG_INFO("token: {}", idToken);
-    auto [result, err] = executeCommand("/usr/local/bin/checktoken", {GetRegistry()->GetKey("app_firebase_admin_credential_json_file")}, {idToken});
-    if (!err.empty()) LOG_ERROR("CheckClientToken - result: {}, email: {}, error: [{}]", result, email, err);
-    else LOG_INFO("CheckClientToken - result: {}, email: {}", result, email);
-    return boost::iequals(boost::trim_copy(result), boost::trim_copy(email));
+    LOG_INFO("CheckClientToken - Verifying token for email: {}", email);
+    
+    // Use pure C++ Firebase verification instead of subprocess
+    // Initialize Firebase verifier on first use (lazy loading)
+    if (!firebaseVerifier) {
+        auto credFilePath = GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
+        if (credFilePath.empty()) {
+            LOG_ERROR("CheckClientToken - Firebase credential path not configured");
+            return false;
+        }
+        
+        try {
+            firebaseVerifier = std::make_shared<FirebaseAdminTokenVerifier>(credFilePath);
+            LOG_INFO("CheckClientToken - Firebase verifier initialized");
+        } catch (const std::exception& e) {
+            LOG_ERROR("CheckClientToken - Failed to initialize Firebase verifier: {}", e.what());
+            return false;
+        }
+    }
+    
+    // Call Firebase Admin API to verify the token
+    auto [success, verified_email] = firebaseVerifier->VerifyIdToken(idToken, email);
+    
+    if (!success) {
+        LOG_ERROR("CheckClientToken - Firebase verification failed: {}", verified_email);
+        return false;
+    }
+    
+    // Verify the returned email matches expected email
+    bool result = (verified_email == email);
+    if (result) {
+        LOG_INFO("CheckClientToken - Token verified successfully for email: {}", email);
+    } else {
+        LOG_ERROR("CheckClientToken - Email mismatch: {} != {}", verified_email, email);
+    }
+    return result;
 }
     // -------to rewrite using boost::asio::process
     // try {

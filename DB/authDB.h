@@ -19,6 +19,7 @@
 
 
 typedef std::function<void(const std::string&, const std::string&, const AuthDatabaseProto::DBName *)> CreateDbFunction;
+#include "../FirebaseAdminTokenVerifier.h"
 
 class AuthorizationDB : public DB::SQLiteBase {
     static std::string default_google_credential_file;
@@ -33,11 +34,14 @@ protected:
     CreateDbFunction fnCreateDb;
     CreateDbFunction fnDeleteDb;
 public:
-    AuthorizationDB(CreateDbFunction fn = nullptr, CreateDbFunction fnDel=nullptr) : DB::SQLiteBase("authorization_internal.db"), fnCreateDb(fn), fnDeleteDb(fn) {}
     virtual ~AuthorizationDB() { Close(); }
     void CheckStructure() override;
     static auto GetFullName(const std::string& path, const std::string& name) -> std::string;
 
+    AuthorizationDB(CreateDbFunction fn = nullptr, CreateDbFunction fnDel=nullptr) 
+        : DB::SQLiteBase("authorization_internal.db"), fnCreateDb(fn), fnDeleteDb(fn), firebaseVerifier(nullptr) {}
+    
+    std::shared_ptr<FirebaseAdminTokenVerifier> firebaseVerifier;
 public:
     std::string RegisterEmail(const AuthDatabaseProto::Session *session, AuthDatabaseProto::User* user, const std::string& deviceToken, const std::string &appName, const std::string &chatId);
     bool DeRegisterDevice(const AuthDatabaseProto::User* user);
@@ -89,6 +93,7 @@ public:
 
     bool CheckClientToken(const std::string& idToken, const std::string& email);
     bool SendNotification(const std::string& deviceToken, const std::string& title, const std::string& message);
+        bool VerifyFirebaseIdToken(const std::string& idToken, const std::string& email);
     bool SendGroupNotification(const std::vector<std::string>& deviceTokens, const std::string& title, const std::string& message);
     bool NotifyAdminUserCreated(const AuthDatabaseProto::User* user);
 
