@@ -93,7 +93,7 @@ public:
 
     bool CheckClientToken(const std::string& idToken, const std::string& email);
     bool SendNotification(const std::string& deviceToken, const std::string& title, const std::string& message);
-        bool VerifyFirebaseIdToken(const std::string& idToken, const std::string& email);
+    bool VerifyFirebaseIdToken(const std::string& idToken, const std::string& email);
     bool SendGroupNotification(const std::vector<std::string>& deviceTokens, const std::string& title, const std::string& message);
     bool NotifyAdminUserCreated(const AuthDatabaseProto::User* user);
 
