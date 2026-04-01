@@ -199,6 +199,67 @@ bool FirebaseAdminTokenVerifier::IsCachedJwtValid() const {
 }
 
 /**
+ * Check if cached OAuth access token is still valid
+ */
+bool FirebaseAdminTokenVerifier::IsCachedAccessTokenValid() const {
+    if (cachedAccessToken.empty()) return false;
+    
+    auto now = std::chrono::system_clock::now();
+    auto threshold = accessTokenExpiry - std::chrono::minutes(JWT_REFRESH_THRESHOLD_MINUTES);
+    
+    return now < threshold;
+}
+
+/**
+ * Exchange a self-signed JWT for an OAuth 2.0 access token
+ * Uses Google's token endpoint with the JWT bearer grant type
+ */
+std::string FirebaseAdminTokenVerifier::ExchangeJwtForAccessToken(const std::string& jwt) {
+    try {
+        const std::string tokenUrl = "https://oauth2.googleapis.com/token";
+        
+        std::string body = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=" + jwt;
+        
+        std::unordered_map<std::string, std::string> headers;
+        headers["Content-Type"] = "application/x-www-form-urlencoded";
+        
+        LOG_INFO("FirebaseAdminTokenVerifier::ExchangeJwtForAccessToken - Requesting access token");
+        
+        auto [response, statusCode] = WebClient::Post(tokenUrl, body, headers);
+        
+        if (statusCode != 200) {
+            LOG_ERROR("FirebaseAdminTokenVerifier::ExchangeJwtForAccessToken - Token exchange failed with status: {} response: {}",
+                      statusCode, response);
+            return "";
+        }
+        
+        json responseJson = json::parse(response);
+        
+        if (!responseJson.contains("access_token")) {
+            LOG_ERROR("FirebaseAdminTokenVerifier::ExchangeJwtForAccessToken - No access_token in response: {}", response);
+            return "";
+        }
+        
+        cachedAccessToken = responseJson["access_token"].get<std::string>();
+        
+        // Cache with expiry (default 3600s, use value from response if available)
+        int expiresIn = 3600;
+        if (responseJson.contains("expires_in")) {
+            expiresIn = responseJson["expires_in"].get<int>();
+        }
+        accessTokenExpiry = std::chrono::system_clock::now() + std::chrono::seconds(expiresIn);
+        
+        LOG_INFO("FirebaseAdminTokenVerifier::ExchangeJwtForAccessToken - Access token obtained, expires in {} seconds", expiresIn);
+        
+        return cachedAccessToken;
+        
+    } catch (const std::exception& e) {
+        LOG_ERROR("FirebaseAdminTokenVerifier::ExchangeJwtForAccessToken - Exception: {}", e.what());
+        return "";
+    }
+}
+
+/**
  * Create a new service account JWT for Firebase Admin API
  * JWT structure: header.payload.signature
  */
@@ -217,12 +278,14 @@ std::string FirebaseAdminTokenVerifier::CreateServiceAccountJwt() {
         };
 
         // Create JWT payload (claims)
+        // aud must be the OAuth token endpoint for JWT-based auth
         json payload = {
             {"iss", clientEmail},
             {"sub", clientEmail},
-            {"aud", "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit"},
+            {"aud", "https://oauth2.googleapis.com/token"},
             {"iat", now_time_t},
-            {"exp", expiry_time_t}
+            {"exp", expiry_time_t},
+            {"scope", "https://www.googleapis.com/auth/identitytoolkit https://www.googleapis.com/auth/firebase"}
         };
 
         // Create header.payload
@@ -282,19 +345,29 @@ std::tuple<bool, std::string> FirebaseAdminTokenVerifier::VerifyIdToken(
             return {false, "Empty ID token"};
         }
 
-        // Get or create a valid JWT
-        std::string jwt = cachedJwt;
-        if (!IsCachedJwtValid()) {
-            jwt = CreateServiceAccountJwt();
-            if (jwt.empty()) {
-                LOG_ERROR("FirebaseAdminTokenVerifier::VerifyIdToken - Failed to create JWT");
-                return {false, "Failed to create authentication token"};
+        // Get or create a valid OAuth 2.0 access token
+        std::string accessToken = cachedAccessToken;
+        if (!IsCachedAccessTokenValid()) {
+            // Create a self-signed JWT first
+            std::string jwt = cachedJwt;
+            if (!IsCachedJwtValid()) {
+                jwt = CreateServiceAccountJwt();
+                if (jwt.empty()) {
+                    LOG_ERROR("FirebaseAdminTokenVerifier::VerifyIdToken - Failed to create JWT");
+                    return {false, "Failed to create authentication token"};
+                }
+            }
+            // Exchange the JWT for an OAuth 2.0 access token
+            accessToken = ExchangeJwtForAccessToken(jwt);
+            if (accessToken.empty()) {
+                LOG_ERROR("FirebaseAdminTokenVerifier::VerifyIdToken - Failed to get access token");
+                return {false, "Failed to obtain OAuth access token"};
             }
         }
 
-        // Prepare request headers
+        // Prepare request headers with the OAuth access token
         std::unordered_map<std::string, std::string> headers;
-        headers["Authorization"] = "Bearer " + jwt;
+        headers["Authorization"] = "Bearer " + accessToken;
         headers["Content-Type"] = "application/json";
 
         // Prepare request body

@@ -30,6 +30,10 @@ private:
     std::string cachedJwt;
     std::chrono::system_clock::time_point jwtExpiry;
     
+    // OAuth access token caching
+    std::string cachedAccessToken;
+    std::chrono::system_clock::time_point accessTokenExpiry;
+    
     // Constants
     static constexpr int JWT_LIFETIME_SECONDS = 3600;      // 1 hour
     static constexpr int JWT_REFRESH_THRESHOLD_MINUTES = 5; // Refresh before 5 min expiry
@@ -59,6 +63,16 @@ private:
      * Returns true if JWT is cached and not near expiration
      */
     bool IsCachedJwtValid() const;
+    
+    /**
+     * Check if cached access token is still valid
+     */
+    bool IsCachedAccessTokenValid() const;
+    
+    /**
+     * Exchange a self-signed JWT for an OAuth 2.0 access token
+     */
+    std::string ExchangeJwtForAccessToken(const std::string& jwt);
     
     /**
      * Create a new service account JWT
