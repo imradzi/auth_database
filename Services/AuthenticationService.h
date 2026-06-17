@@ -91,7 +91,7 @@ public:
     //::grpc::Status GetConfig(::grpc::ServerContext* context, const AuthDatabaseProto::Config* request, AuthDatabaseProto::Config* config) override;
     //int GetConfig(boost::beast::string_view sessionString, const AuthDatabaseProto::Config* request, AuthDatabaseProto::Config* config);
      
-    ::grpc::Status GetConfig(::grpc::ServerContext* context, const AuthDatabaseProto::Config* request, AuthDatabaseProto::Config* config) {
+    ::grpc::Status GetConfig(::grpc::ServerContext* context, const AuthDatabaseProto::Config* request, AuthDatabaseProto::Config* config) override {
         return Execute<AuthDatabaseProto::Config, AuthDatabaseProto::Config>("GetConfig", context, request, config, DoGetConfig, true);
     }
 
