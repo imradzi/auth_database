@@ -122,29 +122,6 @@ bool AuthorizationDB::CheckClientToken(const std::string& idToken, const std::st
     }
     return result;
 }
-    // -------to rewrite using boost::asio::process
-    // try {
-    //     auto googleServiceJsonFile = GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
-    //     LOG_INFO("Google cred file at {}", googleServiceJsonFile);
-    //     namespace bp = boost::process;
-
-    //     boost::asio::io_context ios;
-
-    //     bp::opstream in;
-    //     in << idToken << std::endl;
-    //     std::future<std::string> data;
-    //     std::future<std::string> errData;
-
-    //     bp::child childProcess("/usr/local/bin/checktoken", googleServiceJsonFile, bp::std_in<in, bp::std_out> data, bp::std_err > errData, ios);
-    //     ios.run();
-
-    //     auto err = errData.get();
-    //     auto result = boost::trim_copy(data.get());
-    //     LOG_INFO("CheckClientToken - result: {}, email: {}", result, email);
-    //     return boost::iequals(result, boost::trim_copy(email));
-    // } catch (...) {
-    //     return false;
-    // }
 
 bool AuthorizationDB::SendNotification(const std::string& deviceToken, const std::string& title, const std::string& message) {
     static std::string notificationExecutable = "/usr/local/bin/sendnotification";
@@ -154,9 +131,12 @@ bool AuthorizationDB::SendNotification(const std::string& deviceToken, const std
         return false;
     }
     auto googleServiceJsonFile = GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
-
+    if (googleServiceJsonFile.empty()) {
+        LOG_ERROR("SendNotification: Firebase credential path not configured" );
+        return false;
+    }
     if (!std::filesystem::exists(googleServiceJsonFile)) {
-        LOG_INFO("GoogleServiceJSON: {} does not exist!", googleServiceJsonFile);
+        LOG_ERROR("GoogleServiceJSON: {} does not exist!", googleServiceJsonFile);
         return false;
     }
 
@@ -170,34 +150,6 @@ bool AuthorizationDB::SendNotification(const std::string& deviceToken, const std
     LOG_ERROR("SendNotification - result failed: ", errString);
     return false;
 }
-// -------to rewrite using boost::asio::process
-// try {
-//     auto googleServiceJsonFile = GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
-
-//     if (!std::filesystem::exists(googleServiceJsonFile)) {
-//         LOG_INFO("GoogleServiceJSON: {} does not exist!", googleServiceJsonFile);
-//         return false;
-//     }
-//     namespace bp = boost::process;
-//     boost::asio::io_context ios;
-
-//     bp::opstream in;
-//     in << deviceToken << std::endl;
-//     in << title << std::endl;
-//     in << message << std::endl;
-//     std::future<std::string> data;
-//     std::future<std::string> errData;
-
-//     bp::child childProcess(notificationExecutable, googleServiceJsonFile, bp::std_in<in, bp::std_out> data, bp::std_err > errData, ios);
-//     ios.run();
-
-//     auto result = data.get();
-//     LOG_INFO("SendNotification - result: ", result);
-//     return true;
-// } catch (...) {
-//     LOG_ERROR("SendNotification - unknown exception");
-//     return false;
-// }
 
 bool AuthorizationDB::SendGroupNotification(const std::vector<std::string>& deviceTokens, const std::string& title, const std::string& message) {
     // TODO

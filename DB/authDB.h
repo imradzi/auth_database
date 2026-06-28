@@ -22,7 +22,6 @@ typedef std::function<void(const std::string&, const std::string&, const AuthDat
 #include "../FirebaseAdminTokenVerifier.h"
 
 class AuthorizationDB : public DB::SQLiteBase {
-    static std::string default_google_credential_file;
 protected:
     std::vector<DB::DBObjects> objectList() const override;
     // int GetPrivacyType(AuthDatabaseProto::PrivacyType protoType);
