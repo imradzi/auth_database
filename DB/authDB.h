@@ -38,9 +38,19 @@ public:
     static auto GetFullName(const std::string& path, const std::string& name) -> std::string;
 
     AuthorizationDB(CreateDbFunction fn = nullptr, CreateDbFunction fnDel=nullptr) 
-        : DB::SQLiteBase("authorization_internal.db"), fnCreateDb(fn), fnDeleteDb(fn), firebaseVerifier(nullptr) {}
+        : DB::SQLiteBase("authorization_internal.db"), fnCreateDb(fn), fnDeleteDb(fn) {}
     
-    std::shared_ptr<FirebaseAdminTokenVerifier> firebaseVerifier;
+    /**
+     * Lazy-initialize the process-wide FirebaseAdminTokenVerifier from the
+     * registry key "app_firebase_admin_credential_json_file".
+     * Returns true on success (or if already initialized).
+     */
+    bool EnsureFirebaseVerifier();
+    static FirebaseAdminTokenVerifier* GetFirebaseVerifier() { return sFirebaseVerifier.get(); }
+
+private:
+    static std::shared_ptr<FirebaseAdminTokenVerifier> sFirebaseVerifier;
+
 public:
     std::string RegisterEmail(const AuthDatabaseProto::Session *session, AuthDatabaseProto::User* user, const std::string& deviceToken, const std::string &appName, const std::string &chatId);
     bool DeRegisterDevice(const AuthDatabaseProto::User* user);

@@ -87,26 +87,13 @@ std::tuple<std::string, std::string> executeCommand(const std::string& command, 
 bool AuthorizationDB::CheckClientToken(const std::string& idToken, const std::string& email) {
     LOG_INFO("CheckClientToken - Verifying token for email: {}", email);
     
-    // Use pure C++ Firebase verification instead of subprocess
-    // Initialize Firebase verifier on first use (lazy loading)
-    if (!firebaseVerifier) {
-        auto credFilePath = GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
-        if (credFilePath.empty()) {
-            LOG_ERROR("CheckClientToken - Firebase credential path not configured");
-            return false;
-        }
-        
-        try {
-            firebaseVerifier = std::make_shared<FirebaseAdminTokenVerifier>(credFilePath);
-            LOG_INFO("CheckClientToken - Firebase verifier initialized");
-        } catch (const std::exception& e) {
-            LOG_ERROR("CheckClientToken - Failed to initialize Firebase verifier: {}", e.what());
-            return false;
-        }
+    // Use shared lazy-initialized Firebase verifier
+    if (!EnsureFirebaseVerifier()) {
+        return false;
     }
     
     // Call Firebase Admin API to verify the token
-    auto [success, verified_email] = firebaseVerifier->VerifyIdToken(idToken, email);
+    auto [success, verified_email] = sFirebaseVerifier->VerifyIdToken(idToken, email);
     
     if (!success) {
         LOG_ERROR("CheckClientToken - Firebase verification failed: {}", verified_email);

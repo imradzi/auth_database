@@ -30,6 +30,43 @@
 #include "logger/logger.h"
 #include <algorithm>
 
+// -- process-wide Firebase verifier, lazy-initialized on first use ----------------
+std::shared_ptr<FirebaseAdminTokenVerifier> AuthorizationDB::sFirebaseVerifier;
+
+/**
+ * Lazy-initialize the process-wide FirebaseAdminTokenVerifier.
+ * Reads the service-account credential path from the registry key
+ * "app_firebase_admin_credential_json_file".
+ *
+ * Called by VerifyFirebaseIdToken and CheckClientToken on first use.
+ * Once initialized, gRPC_Server's VerifyFirebaseToken picks it up
+ * via GetFirebaseVerifier().
+ */
+bool AuthorizationDB::EnsureFirebaseVerifier() {
+    if (sFirebaseVerifier) {
+        return true;  // already initialized
+    }
+
+    auto credFilePath = GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
+    if (credFilePath.empty()) {
+        LOG_ERROR("AuthorizationDB::EnsureFirebaseVerifier - "
+                  "Firebase credential path not configured in registry "
+                  "(key: app_firebase_admin_credential_json_file)");
+        return false;
+    }
+
+    try {
+        sFirebaseVerifier = std::make_shared<FirebaseAdminTokenVerifier>(credFilePath);
+        LOG_INFO("AuthorizationDB::EnsureFirebaseVerifier - "
+                 "Firebase verifier initialized from: {}", credFilePath);
+        return true;
+    } catch (const std::exception& e) {
+        LOG_ERROR("AuthorizationDB::EnsureFirebaseVerifier - "
+                  "Failed to initialize Firebase verifier: {}", e.what());
+        return false;
+    }
+}
+
 /**
  * Initialize Firebase Admin SDK and verify ID token with Firebase
  * 
@@ -44,26 +81,12 @@ bool AuthorizationDB::VerifyFirebaseIdToken(const std::string& idToken, const st
     
     try {
         // Initialize Firebase verifier on first use (lazy loading)
-        if (!firebaseVerifier) {
-            auto credFilePath = GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
-            
-            if (credFilePath.empty()) {
-                LOG_ERROR("AuthorizationDB::VerifyFirebaseIdToken - Firebase credential path not configured in registry");
-                return false;
-            }
-            
-            try {
-                firebaseVerifier = std::make_shared<FirebaseAdminTokenVerifier>(credFilePath);
-                LOG_INFO("AuthorizationDB::VerifyFirebaseIdToken - Firebase verifier initialized");
-            } catch (const std::exception& e) {
-                LOG_ERROR("AuthorizationDB::VerifyFirebaseIdToken - Failed to initialize Firebase verifier: {}", 
-                         e.what());
-                return false;
-            }
+        if (!EnsureFirebaseVerifier()) {
+            return false;
         }
 
         // Call Firebase Admin API to verify the token
-        auto [success, result] = firebaseVerifier->VerifyIdToken(idToken, email);
+        auto [success, result] = sFirebaseVerifier->VerifyIdToken(idToken, email);
         
         if (!success) {
             LOG_ERROR("AuthorizationDB::VerifyFirebaseIdToken - Firebase verification failed: {}", result);
