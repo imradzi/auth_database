@@ -337,7 +337,6 @@ FirebaseAdminTokenVerifier::FirebaseAdminTokenVerifier(const std::string& creden
  * Verify an ID token with Firebase Admin API
  */
 std::tuple<bool, std::string> FirebaseAdminTokenVerifier::VerifyIdToken(const std::string& idToken, const std::string& expectedEmail) {
-    
     try {
         if (idToken.empty()) {
             LOG_ERROR("FirebaseAdminTokenVerifier::VerifyIdToken - Empty ID token provided");
@@ -381,8 +380,7 @@ std::tuple<bool, std::string> FirebaseAdminTokenVerifier::VerifyIdToken(const st
         auto [response, statusCode] = WebClient::Post(FIREBASE_API_ENDPOINT, body, headers);
 
         if (statusCode != 200) {
-            LOG_ERROR("FirebaseAdminTokenVerifier::VerifyIdToken - Firebase API returned status: {} response: {}",
-                      statusCode, response);
+            LOG_ERROR("FirebaseAdminTokenVerifier::VerifyIdToken - Firebase API returned status: {} response: {}", statusCode, response);
             return {false, fmt::format("Firebase API error ({})", statusCode)};
         }
 
@@ -410,12 +408,9 @@ std::tuple<bool, std::string> FirebaseAdminTokenVerifier::VerifyIdToken(const st
             }
 
             std::string verifiedEmail = user["email"].get<std::string>();
-
-            // If expectedEmail is provided, verify it matches
             if (!expectedEmail.empty() && verifiedEmail != expectedEmail) {
-                LOG_ERROR("FirebaseAdminTokenVerifier::VerifyIdToken - Email mismatch: {} != {}",
-                          verifiedEmail, expectedEmail);
-                return {false, "Email mismatch"};
+                LOG_ERROR("FirebaseAdminTokenVerifier::VerifyIdToken - Email mismatch: {} != {}", verifiedEmail, expectedEmail);
+                return {false, fmt::format("expected email {}", verifiedEmail)};
             }
 
             LOG_INFO("FirebaseAdminTokenVerifier::VerifyIdToken - Token verified for: {}", verifiedEmail);

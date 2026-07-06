@@ -76,32 +76,31 @@ bool AuthorizationDB::EnsureFirebaseVerifier() {
  * 3. Caches positive verification results in SQLite (idTokens table)
  * 4. Returns true if token is valid, false otherwise
  */
-std::tuple<bool, std::string> AuthorizationDB::VerifyFirebaseIdToken(const std::string& idToken, const std::string& email) {
-    LOG_INFO("AuthorizationDB::VerifyFirebaseIdToken - Verifying token for email: {}", email);
+std::tuple<bool, std::string> AuthorizationDB::VerifyFirebaseIdToken(const std::string& idToken) {
+    LOG_INFO("AuthorizationDB::VerifyFirebaseIdToken - Verifying token");
     
     try {
         // Initialize Firebase verifier on first use (lazy loading)
         if (!EnsureFirebaseVerifier()) {
-            return false;
+            return {false, "Firebase verifier not initialized"};
         }
 
         // Call Firebase Admin API to verify the token
-        auto [success, result] = sFirebaseVerifier->VerifyIdToken(idToken, email);
+        auto [success, result] = sFirebaseVerifier->VerifyIdToken(idToken);
         
         if (!success) {
             LOG_ERROR("AuthorizationDB::VerifyFirebaseIdToken - Firebase verification failed: {}", result);
-            return false;
+            return {false, result};
         }
 
         // Cache the verified token in SQLite
         // Use the idTokens table (already has email and dateChecked columns)
+        auto& email = result;
         try {
-            auto stt = GetSession().PrepareStatement(
-                "replace into idTokens(email, dateChecked) values(@email, @date)");
+            auto stt = GetSession().PrepareStatement("replace into idTokens(email, dateChecked) values(@email, @date)");
             stt->Bind("@email", email);
             stt->Bind("@date", std::chrono::system_clock::now());
             stt->ExecuteUpdate();
-            
             LOG_INFO("AuthorizationDB::VerifyFirebaseIdToken - Token cached for email: {}", email);
         } catch (const std::exception& e) {
             LOG_WARN("AuthorizationDB::VerifyFirebaseIdToken - Failed to cache token: {}", e.what());
@@ -109,15 +108,14 @@ std::tuple<bool, std::string> AuthorizationDB::VerifyFirebaseIdToken(const std::
             // The user is authenticated, just can't benefit from cache next time
         }
 
-        LOG_INFO("AuthorizationDB::VerifyFirebaseIdToken - Token verification successful, verified email: {}", 
-                 result);
-        return true;
+        LOG_INFO("AuthorizationDB::VerifyFirebaseIdToken - Token verification successful, verified email: {}", email);
+        return {true, email};
 
     } catch (const std::exception& e) {
         LOG_ERROR("AuthorizationDB::VerifyFirebaseIdToken - Exception: {}", e.what());
-        return false;
+        return {false, e.what()};
     } catch (...) {
         LOG_ERROR("AuthorizationDB::VerifyFirebaseIdToken - Unknown exception");
-        return false;
+        return {false, "Unknown error during token verification"};
     }
 }

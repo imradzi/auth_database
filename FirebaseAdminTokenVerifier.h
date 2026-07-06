@@ -98,6 +98,5 @@ public:
      *         - success=true: email contains verified email from Firebase
      *         - success=false: email contains error description
      */
-    std::tuple<bool, std::string> VerifyIdToken(const std::string& idToken, 
-                                                  const std::string& expectedEmail = "");
+    std::tuple<bool, std::string> VerifyIdToken(const std::string& idToken, const std::string& expectedEmail = "");
 };
