@@ -76,7 +76,7 @@ bool AuthorizationDB::EnsureFirebaseVerifier() {
  * 3. Caches positive verification results in SQLite (idTokens table)
  * 4. Returns true if token is valid, false otherwise
  */
-bool AuthorizationDB::VerifyFirebaseIdToken(const std::string& idToken, const std::string& email) {
+std::tuple<bool, std::string> AuthorizationDB::VerifyFirebaseIdToken(const std::string& idToken, const std::string& email) {
     LOG_INFO("AuthorizationDB::VerifyFirebaseIdToken - Verifying token for email: {}", email);
     
     try {

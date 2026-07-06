@@ -336,8 +336,7 @@ FirebaseAdminTokenVerifier::FirebaseAdminTokenVerifier(const std::string& creden
 /**
  * Verify an ID token with Firebase Admin API
  */
-std::tuple<bool, std::string> FirebaseAdminTokenVerifier::VerifyIdToken(
-    const std::string& idToken, const std::string& expectedEmail) {
+std::tuple<bool, std::string> FirebaseAdminTokenVerifier::VerifyIdToken(const std::string& idToken, const std::string& expectedEmail) {
     
     try {
         if (idToken.empty()) {
