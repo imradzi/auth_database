@@ -29,6 +29,7 @@
 #include "authDB.h"
 #include "logger/logger.h"
 #include <algorithm>
+#include <mutex>
 
 // -- process-wide Firebase verifier, lazy-initialized on first use ----------------
 std::shared_ptr<FirebaseAdminTokenVerifier> AuthorizationDB::sFirebaseVerifier;
@@ -43,6 +44,11 @@ std::shared_ptr<FirebaseAdminTokenVerifier> AuthorizationDB::sFirebaseVerifier;
  * via GetFirebaseVerifier().
  */
 bool AuthorizationDB::EnsureFirebaseVerifier() {
+    // Thread-safe lazy initialization using a static mutex.
+    // Multiple gRPC threads may call this concurrently on first login.
+    static std::mutex initMutex;
+    std::lock_guard<std::mutex> lock(initMutex);
+
     if (sFirebaseVerifier) {
         return true;  // already initialized
     }
@@ -78,7 +84,7 @@ bool AuthorizationDB::EnsureFirebaseVerifier() {
  */
 std::tuple<bool, std::string> AuthorizationDB::VerifyFirebaseIdToken(const std::string& idToken) {
     LOG_INFO("AuthorizationDB::VerifyFirebaseIdToken - Verifying token");
-    
+    static std::mutex verifierMutex;
     try {
         // Initialize Firebase verifier on first use (lazy loading)
         if (!EnsureFirebaseVerifier()) {
@@ -97,6 +103,7 @@ std::tuple<bool, std::string> AuthorizationDB::VerifyFirebaseIdToken(const std::
         // Use the idTokens table (already has email and dateChecked columns)
         auto& email = result;
         try {
+            std::lock_guard<std::mutex> lock(verifierMutex);
             auto stt = GetSession().PrepareStatement("replace into idTokens(email, dateChecked) values(@email, @date)");
             stt->Bind("@email", email);
             stt->Bind("@date", std::chrono::system_clock::now());

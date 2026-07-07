@@ -4,6 +4,7 @@
 #include <memory>
 #include <tuple>
 #include <chrono>
+#include <mutex>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -34,6 +35,9 @@ private:
     std::string cachedAccessToken;
     std::chrono::system_clock::time_point accessTokenExpiry;
     
+    // Mutex to protect cached JWT/access token fields from concurrent access
+    mutable std::mutex cacheMutex_;
+    
     // Constants
     static constexpr int JWT_LIFETIME_SECONDS = 3600;      // 1 hour
     static constexpr int JWT_REFRESH_THRESHOLD_MINUTES = 5; // Refresh before 5 min expiry
@@ -59,26 +63,16 @@ private:
     std::string SignWithRS256(const std::string& message);
     
     /**
-     * Check if cached JWT is still valid
-     * Returns true if JWT is cached and not near expiration
+     * Exchange a self-signed JWT for an OAuth 2.0 access token.
+     * Caller MUST hold cacheMutex_. Updates cachedAccessToken / accessTokenExpiry.
      */
-    bool IsCachedJwtValid() const;
+    std::string ExchangeJwtForAccessTokenLocked(const std::string& jwt);
     
     /**
-     * Check if cached access token is still valid
+     * Create a new service account JWT.
+     * Caller MUST hold cacheMutex_. Updates cachedJwt / jwtExpiry.
      */
-    bool IsCachedAccessTokenValid() const;
-    
-    /**
-     * Exchange a self-signed JWT for an OAuth 2.0 access token
-     */
-    std::string ExchangeJwtForAccessToken(const std::string& jwt);
-    
-    /**
-     * Create a new service account JWT
-     * This JWT is used to authenticate with Firebase Admin API
-     */
-    std::string CreateServiceAccountJwt();
+    std::string CreateServiceAccountJwtLocked();
 
 public:
     /**

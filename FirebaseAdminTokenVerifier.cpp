@@ -187,34 +187,11 @@ bool FirebaseAdminTokenVerifier::LoadServiceAccount(const std::string& credentia
 }
 
 /**
- * Check if cached JWT is still valid (not near expiration)
- */
-bool FirebaseAdminTokenVerifier::IsCachedJwtValid() const {
-    if (cachedJwt.empty()) return false;
-    
-    auto now = std::chrono::system_clock::now();
-    auto threshold = jwtExpiry - std::chrono::minutes(JWT_REFRESH_THRESHOLD_MINUTES);
-    
-    return now < threshold;
-}
-
-/**
- * Check if cached OAuth access token is still valid
- */
-bool FirebaseAdminTokenVerifier::IsCachedAccessTokenValid() const {
-    if (cachedAccessToken.empty()) return false;
-    
-    auto now = std::chrono::system_clock::now();
-    auto threshold = accessTokenExpiry - std::chrono::minutes(JWT_REFRESH_THRESHOLD_MINUTES);
-    
-    return now < threshold;
-}
-
-/**
  * Exchange a self-signed JWT for an OAuth 2.0 access token
  * Uses Google's token endpoint with the JWT bearer grant type
  */
-std::string FirebaseAdminTokenVerifier::ExchangeJwtForAccessToken(const std::string& jwt) {
+// Caller MUST hold cacheMutex_.
+std::string FirebaseAdminTokenVerifier::ExchangeJwtForAccessTokenLocked(const std::string& jwt) {
     try {
         const std::string tokenUrl = "https://oauth2.googleapis.com/token";
         
@@ -263,7 +240,8 @@ std::string FirebaseAdminTokenVerifier::ExchangeJwtForAccessToken(const std::str
  * Create a new service account JWT for Firebase Admin API
  * JWT structure: header.payload.signature
  */
-std::string FirebaseAdminTokenVerifier::CreateServiceAccountJwt() {
+// Caller MUST hold cacheMutex_.
+std::string FirebaseAdminTokenVerifier::CreateServiceAccountJwtLocked() {
     try {
         auto now = std::chrono::system_clock::now();
         auto expiry = now + std::chrono::seconds(JWT_LIFETIME_SECONDS);
@@ -343,23 +321,40 @@ std::tuple<bool, std::string> FirebaseAdminTokenVerifier::VerifyIdToken(const st
             return {false, "Empty ID token"};
         }
 
-        // Get or create a valid OAuth 2.0 access token
-        std::string accessToken = cachedAccessToken;
-        if (!IsCachedAccessTokenValid()) {
-            // Create a self-signed JWT first
-            std::string jwt = cachedJwt;
-            if (!IsCachedJwtValid()) {
-                jwt = CreateServiceAccountJwt();
-                if (jwt.empty()) {
-                    LOG_ERROR("FirebaseAdminTokenVerifier::VerifyIdToken - Failed to create JWT");
-                    return {false, "Failed to create authentication token"};
+        // Get or create a valid OAuth 2.0 access token.
+        // Hold cacheMutex_ across the entire cache-check-and-refresh sequence
+        // to prevent multiple threads from racing to create new JWTs/access tokens.
+        std::string accessToken;
+        {
+            std::lock_guard<std::mutex> lock(cacheMutex_);
+
+            // Check if cached access token is still valid
+            auto now = std::chrono::system_clock::now();
+            auto accessThreshold = accessTokenExpiry - std::chrono::minutes(JWT_REFRESH_THRESHOLD_MINUTES);
+
+            if (!cachedAccessToken.empty() && now < accessThreshold) {
+                accessToken = cachedAccessToken;
+            } else {
+                // Need a new access token — first ensure we have a valid JWT
+                auto jwtThreshold = jwtExpiry - std::chrono::minutes(JWT_REFRESH_THRESHOLD_MINUTES);
+                std::string jwt;
+                if (!cachedJwt.empty() && now < jwtThreshold) {
+                    jwt = cachedJwt;
+                } else {
+                    // Create a new service-account JWT (OpenSSL signing — done under lock)
+                    jwt = CreateServiceAccountJwtLocked();
+                    if (jwt.empty()) {
+                        LOG_ERROR("FirebaseAdminTokenVerifier::VerifyIdToken - Failed to create JWT");
+                        return {false, "Failed to create authentication token"};
+                    }
                 }
-            }
-            // Exchange the JWT for an OAuth 2.0 access token
-            accessToken = ExchangeJwtForAccessToken(jwt);
-            if (accessToken.empty()) {
-                LOG_ERROR("FirebaseAdminTokenVerifier::VerifyIdToken - Failed to get access token");
-                return {false, "Failed to obtain OAuth access token"};
+
+                // Exchange JWT for access token (HTTP call — done under lock)
+                accessToken = ExchangeJwtForAccessTokenLocked(jwt);
+                if (accessToken.empty()) {
+                    LOG_ERROR("FirebaseAdminTokenVerifier::VerifyIdToken - Failed to get access token");
+                    return {false, "Failed to obtain OAuth access token"};
+                }
             }
         }
 
