@@ -53,22 +53,21 @@ bool AuthorizationDB::EnsureFirebaseVerifier() {
         return true;  // already initialized
     }
 
-    auto credFilePath = GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
+    AuthorizationDB authDB;
+    authDB.Open();
+    auto credFilePath = authDB.GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
     if (credFilePath.empty()) {
-        LOG_ERROR("AuthorizationDB::EnsureFirebaseVerifier - "
-                  "Firebase credential path not configured in registry "
+        LOG_ERROR("AuthorizationDB::EnsureFirebaseVerifier - Firebase credential path not configured in registry "
                   "(key: app_firebase_admin_credential_json_file)");
         return false;
     }
 
     try {
         sFirebaseVerifier = std::make_shared<FirebaseAdminTokenVerifier>(credFilePath);
-        LOG_INFO("AuthorizationDB::EnsureFirebaseVerifier - "
-                 "Firebase verifier initialized from: {}", credFilePath);
+        LOG_INFO("AuthorizationDB::EnsureFirebaseVerifier - Firebase verifier initialized from: {}", credFilePath);
         return true;
     } catch (const std::exception& e) {
-        LOG_ERROR("AuthorizationDB::EnsureFirebaseVerifier - "
-                  "Failed to initialize Firebase verifier: {}", e.what());
+        LOG_ERROR("AuthorizationDB::EnsureFirebaseVerifier - Failed to initialize Firebase verifier: {}", e.what());
         return false;
     }
 }

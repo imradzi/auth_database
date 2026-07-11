@@ -101,7 +101,7 @@ bool AuthorizationDB::CheckClientToken(const std::string& idToken, const std::st
     }
     
     // Verify the returned email matches expected email
-    bool result = (verified_email == email);
+    bool result = (verified_email == email || email.empty()); // or no check with email
     if (result) {
         LOG_INFO("CheckClientToken - Token verified successfully for email: {}", email);
     } else {
