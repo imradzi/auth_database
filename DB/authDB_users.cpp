@@ -32,7 +32,7 @@
 
 void AuthorizationDB::GetUser(const AuthDatabaseProto::Session &session, AuthDatabaseProto::User *user) {
     user->Clear();
-    ShowLog(fmt::format("***AuthorizationDB::GetUser> {}", session.user().email()));
+    LOG_INFO("***AuthorizationDB::GetUser> {}", session.user().email());
     auto stt = GetSession().PrepareStatement(
         "select id, email, uf.name, uf.telNo, timeRegistered, timeAccepted, uf.IC "
         "from users u "
@@ -51,9 +51,9 @@ void AuthorizationDB::GetUser(const AuthDatabaseProto::Session &session, AuthDat
         else
             SetTimestamp(user->mutable_time_accepted(), rs->Get<int64_t>(5));
         user->set_ic(rs->Get(6));
-        ShowLog(fmt::format("AuthorizationDB::GetUser> email: {} id: {}, name: {}, telNo: {}", user->email(), user->id(), user->name(), user->tel_no()));
+        LOG_INFO("AuthorizationDB::GetUser> email: {} id: {}, name: {}, telNo: {}", user->email(), user->id(), user->name(), user->tel_no());
     } else {  // missing user should be added since this call after all auth ok
-        ShowLog(fmt::format("AuthorizationDB::GetUser> {} NOT FOUND!", session.user().email()));
+        LOG_INFO("AuthorizationDB::GetUser> {} NOT FOUND!", session.user().email());
         *user = session.user();
         user->set_id(std::to_string(SaveUser(&session, user)));
     }
@@ -103,7 +103,7 @@ std::shared_ptr<wpSQLStatement> AuthorizationDB::GetDBUserRoles(const std::strin
         std::tie(res, sttGetType) = GetTypeRecord(rs->Get(1), r, sttGetType);
     }
     
-    ShowLog(fmt::format("AuthorizationDB::GetDBUserRoles> user: {} for db: {} -> roles", user->email(), dbName, user->user_db_roles_size()));
+    LOG_INFO("AuthorizationDB::GetDBUserRoles> user: {} for db: {} -> roles", user->email(), dbName, user->user_db_roles_size());
     return stt;
 }
 
@@ -142,9 +142,9 @@ bool AuthorizationDB::GetUserList(AuthDatabaseProto::ParticipantList *list) {
 }
 
 int64_t AuthorizationDB::CreateUser(const AuthDatabaseProto::Session *session, const AuthDatabaseProto::User *user, const std::string &chatId) {
-    ShowLog(fmt::format("Create user (id: {}, name: {}, tel: {})", user->id(), user->name(), user->tel_no()));
+    LOG_INFO("Create user (id: {}, name: {}, tel: {})", user->id(), user->name(), user->tel_no());
     auto id = SaveUser(session, user);
-    ShowLog(fmt::format("Create user returns id = {}", id));
+    LOG_INFO("Create user returns id = {}", id);
     if (id > 0) {
         NotifyAdminUserCreated(user);
     }
@@ -152,7 +152,7 @@ int64_t AuthorizationDB::CreateUser(const AuthDatabaseProto::Session *session, c
 }
 
 int64_t AuthorizationDB::SaveUser(const AuthDatabaseProto::Session *session, const AuthDatabaseProto::User *user) {
-    ShowLog(fmt::format("AuthorizationDB::SaveUser> id: {}, name: {}, tel: {}", user->id(), user->name(), user->tel_no()));
+    LOG_INFO("AuthorizationDB::SaveUser> id: {}, name: {}, tel: {}", user->id(), user->name(), user->tel_no());
     int64_t uid=0;
     bool isNew = true;
     try {
@@ -199,18 +199,15 @@ int64_t AuthorizationDB::SaveUser(const AuthDatabaseProto::Session *session, con
         stt->Bind("@timeAccepted", timeAccepted);
         stt->ExecuteUpdate();
         x->SetOK();
-    } catch (wpSQLException &e) {
-        uid = 0;       
-        ShowLog(fmt::format("sql exception in RegisterEmail: {}", e.message));
-    } catch (std::exception &e) {
+    } catch (const std::exception &e) {
+        LOG_ERROR("exception in RegisterEmail: {}", e.what());
         uid = 0;
-        ShowLog(fmt::format("exception in RegisterEmail: {}", e.what()));
     } catch (...) {
+        LOG_ERROR("unknown exception in RegisterEmail");
         uid = 0;
-        ShowLog("unknown exception in RegisterEmail");
     }
     if (uid > 0 && session != nullptr) {
-        ShowLog("Sending message new user");
+        LOG_INFO("Sending message new user");
         auto m = MessageSender::Create(AuthChatProto::EventType::ev_user, *session, true);
         m->Add(isNew ? "created" : "updated", "id", std::to_string(uid));
         m->Commit();
@@ -232,12 +229,10 @@ bool AuthorizationDB::SaveDependent(const AuthDatabaseProto::Session *session, c
             stt->ExecuteUpdate();
             return true;
         }
-    } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in RegisterEmail: {}", e.message));
-    } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in RegisterEmail: {}", e.what()));
+    } catch (const std::exception &e) {
+        LOG_ERROR("exception in RegisterEmail: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in RegisterEmail");
+        LOG_ERROR("unknown exception in RegisterEmail");
     }
     return false;
 }

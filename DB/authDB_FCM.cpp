@@ -75,96 +75,68 @@ std::tuple<std::string, std::string> executeCommand(const std::string& command, 
 
         proc.wait();
     } catch (const std::exception& e) {
+        LOG_ERROR("executeCommand exception: {}", e.what());
         return {"", e.what()};
     } catch (...) {
+        LOG_ERROR("executeCommand unknown exception");
         return {"", "Unknown error"};
     }
     return {output, error_output};
 }
 
 bool AuthorizationDB::CheckClientToken(const std::string& idToken, const std::string& email) {
-    ShowLog(fmt::format("email: {}", email));
-    ShowLog(fmt::format("token: {}", idToken));
-    auto [result, err] = executeCommand("/usr/local/bin/checktoken", {GetRegistry()->GetKey("app_firebase_admin_credential_json_file")}, {idToken});
-    ShowLog(fmt::format("CheckClientToken - result: {}, email: {}, error: [{}]", result, email, err));
-    return boost::iequals(boost::trim_copy(result), boost::trim_copy(email));
+    LOG_INFO("CheckClientToken - Verifying token for email: {}", email);
+    
+    // Use shared lazy-initialized Firebase verifier
+    if (!EnsureFirebaseVerifier()) {
+        return false;
+    }
+    
+    // Call Firebase Admin API to verify the token
+    auto [success, verified_email] = sFirebaseVerifier->VerifyIdToken(idToken, email);
+    
+    if (!success) {
+        LOG_ERROR("CheckClientToken - Firebase verification failed: {}", verified_email);
+        return false;
+    }
+    
+    // Verify the returned email matches expected email
+    bool result = (verified_email == email || email.empty()); // or no check with email
+    if (result) {
+        LOG_INFO("CheckClientToken - Token verified successfully for email: {}", email);
+    } else {
+        LOG_ERROR("CheckClientToken - Email mismatch: {} != {}", verified_email, email);
+    }
+    return result;
 }
-    // -------to rewrite using boost::asio::process
-    // try {
-    //     auto googleServiceJsonFile = GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
-    //     ShowLog(fmt::format("Google cred file at {}", googleServiceJsonFile));
-    //     namespace bp = boost::process;
-
-    //     boost::asio::io_context ios;
-
-    //     bp::opstream in;
-    //     in << idToken << std::endl;
-    //     std::future<std::string> data;
-    //     std::future<std::string> errData;
-
-    //     bp::child childProcess("/usr/local/bin/checktoken", googleServiceJsonFile, bp::std_in<in, bp::std_out> data, bp::std_err > errData, ios);
-    //     ios.run();
-
-    //     auto err = errData.get();
-    //     auto result = boost::trim_copy(data.get());
-    //     ShowLog(fmt::format("CheckClientToken - result: {}, email: {}", result, email));
-    //     return boost::iequals(result, boost::trim_copy(email));
-    // } catch (...) {
-    //     return false;
-    // }
 
 bool AuthorizationDB::SendNotification(const std::string& deviceToken, const std::string& title, const std::string& message) {
     static std::string notificationExecutable = "/usr/local/bin/sendnotification";
 
     if (!std::filesystem::exists(notificationExecutable)) {
-        ShowLog(fmt::format("Notification module: {} does not exists", notificationExecutable));
+        LOG_INFO("Notification module: {} does not exists", notificationExecutable);
         return false;
     }
     auto googleServiceJsonFile = GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
-
+    if (googleServiceJsonFile.empty()) {
+        LOG_ERROR("SendNotification: Firebase credential path not configured" );
+        return false;
+    }
     if (!std::filesystem::exists(googleServiceJsonFile)) {
-        ShowLog(fmt::format("GoogleServiceJSON: {} does not exist!", googleServiceJsonFile));
+        LOG_ERROR("GoogleServiceJSON: {} does not exist!", googleServiceJsonFile);
         return false;
     }
 
-    ShowLog(fmt::format("SendNotification called:  {}", deviceToken));
-    ShowLog(fmt::format("SendNotification message: {} : {}", title, message));
+    LOG_INFO("SendNotification called:  {}", deviceToken);
+    LOG_INFO("SendNotification message: {} : {}", title, message);
     auto [result, errString] = executeCommand(notificationExecutable, {googleServiceJsonFile}, {deviceToken, title, message});
     if (errString.empty()) {
-        ShowLog(fmt::format("SendNotification - result: {}", result));
+        LOG_INFO("SendNotification - result: {}", result);
         return true;
     }
-    ShowLog(fmt::format("SendNotification - result failed: ", errString));
+    LOG_ERROR("SendNotification - result failed: ", errString);
     return false;
 }
-// -------to rewrite using boost::asio::process
-// try {
-//     auto googleServiceJsonFile = GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
-
-//     if (!std::filesystem::exists(googleServiceJsonFile)) {
-//         ShowLog(fmt::format("GoogleServiceJSON: {} does not exist!", googleServiceJsonFile));
-//         return false;
-//     }
-//     namespace bp = boost::process;
-//     boost::asio::io_context ios;
-
-//     bp::opstream in;
-//     in << deviceToken << std::endl;
-//     in << title << std::endl;
-//     in << message << std::endl;
-//     std::future<std::string> data;
-//     std::future<std::string> errData;
-
-//     bp::child childProcess(notificationExecutable, googleServiceJsonFile, bp::std_in<in, bp::std_out> data, bp::std_err > errData, ios);
-//     ios.run();
-
-//     auto result = data.get();
-//     ShowLog(fmt::format("SendNotification - result: ", result));
-//     return true;
-// } catch (...) {
-//     ShowLog("SendNotification - unknown exception");
-//     return false;
-// }
 
 bool AuthorizationDB::SendGroupNotification(const std::vector<std::string>& deviceTokens, const std::string& title, const std::string& message) {
     // TODO
@@ -175,13 +147,13 @@ bool AuthorizationDB::NotifyAdminUserCreated(const AuthDatabaseProto::User* user
     auto authorizer = GetRegistry()->GetKey("uRoles_Authorizer");
     auto admin = GetRegistry()->GetKey("uRoles_Admin");
     auto sql = fmt::format("select devicetoken from userdevicetokens where userid in (select distinct userid from userroles where roleid in ({},{}))", authorizer, admin);
-    ShowLog(sql);
+    LOG_INFO(sql);
     auto rs = GetSession().ExecuteQuery(sql);
     int nAuthorizer = 0;
     while (rs->NextRow()) {
         nAuthorizer++;
         SendNotification(rs->Get(0), "Access Request", fmt::format("User: {} ({}) request to access the system", user->name(), user->email()));
     }
-    ShowLog(fmt::format("NotifiyAdminUserCreated: No of authorizers notified = {}", nAuthorizer));
+    LOG_INFO("NotifiyAdminUserCreated: No of authorizers notified = {}", nAuthorizer);
     return true;
 }

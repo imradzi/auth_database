@@ -21,12 +21,12 @@
 #include "beast.h"
 
 #include "AuthenticationService.h"
-#include "logger.h"
+#include "logger/logger.h"
 
 std::tuple<bool, std::unique_ptr<AuthDatabaseProto::Session>, std::unique_ptr<AuthorizationDB>> AuthenticationService::ReadMetaData(const std::string& name, ::grpc::ServerContext* context, bool skipCheckEmailApproved, bool toValidateToken) {
     auto meta = context->client_metadata();
     auto session = ::GetSession(context);
-    ShowLog(fmt::format("{}> Read MetaData -> email: {}, name: {}, telNo: {}, db: {}, appName: {}", name, session->user().email(), session->user().name(), session->user().tel_no(), session->db_name(), session->app_name())) ;
+    LOG_INFO("{}> Read MetaData -> email: {}, name: {}, telNo: {}, db: {}, appName: {}", name, session->user().email(), session->user().name(), session->user().tel_no(), session->db_name(), session->app_name()) ;
     try {
         auto authDb = std::make_unique<AuthorizationDB>();
         authDb->Open();
@@ -52,9 +52,7 @@ std::tuple<bool, std::unique_ptr<AuthDatabaseProto::Session>, std::unique_ptr<Au
             return {false, nullptr, nullptr};
         }
         return {false, nullptr, nullptr};
-    } catch (wpSQLException& e) {
-        context->AddTrailingMetadata("error", e.message);
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
         context->AddTrailingMetadata("error", e.what());
     } catch (...) {
         context->AddTrailingMetadata("error", "exception");

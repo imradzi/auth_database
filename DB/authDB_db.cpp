@@ -28,6 +28,7 @@
 
 #include "activityTrackkerDB.h"
 #include "authDB.h"
+#include "guid.h"
 #include <boost/uuid/random_generator.hpp>
 extern boost::uuids::random_generator_mt19937 uuidGen;
 
@@ -64,7 +65,7 @@ std::string AuthorizationDB::RegisterDB(const AuthDatabaseProto::DBName *db, Cre
         if (rs->NextRow()) return rs->Get(0);
         return "";
     };
-    ShowLog(fmt::format("RegisterDB: name={}, app={}, privacyId={}", db->db_name(), db->app_name(), db->privacy_type().id()));
+    LOG_INFO("RegisterDB: name={}, app={}, privacyId={}", db->db_name(), db->app_name(), db->privacy_type().id());
     try {
         auto x = GetSession().GetAutoCommitter();
         std::string dbName;
@@ -82,7 +83,7 @@ std::string AuthorizationDB::RegisterDB(const AuthDatabaseProto::DBName *db, Cre
             stt->Bind("@dbname", dbName);
             auto rs = stt->ExecuteQuery();
             if (rs->NextRow()) {
-                ShowLog("RegisterDB: db.dbname already exists");
+                LOG_INFO("RegisterDB: db.dbname already exists");
                 return "";
             }  // already registered
         }
@@ -106,7 +107,7 @@ std::string AuthorizationDB::RegisterDB(const AuthDatabaseProto::DBName *db, Cre
         stt->Bind("@email", db->owner_email());
         auto rs = stt->ExecuteQuery();
         if (!rs->NextRow()) {
-            ShowLog(fmt::format("RegisterDB: user {} not registered.", db->owner_email()));
+            LOG_INFO("RegisterDB: user {} not registered.", db->owner_email());
             return "";
         }
         auto uid = rs->Get<int64_t>(0);
@@ -136,14 +137,12 @@ std::string AuthorizationDB::RegisterDB(const AuthDatabaseProto::DBName *db, Cre
             }
         }
         x->SetOK();
-        ShowLog(fmt::format("RegisterDB: registered db in folder : {}", folderName));
+        LOG_INFO("RegisterDB: registered db in folder : {}", folderName);
         return folderName;
-    } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in RegisterDB: {}", e.message));
-    } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in RegisterDB: {}", e.what()));
+    } catch (const std::exception &e) {
+        LOG_ERROR("exception in RegisterDB: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in RegisterDB ");
+        LOG_ERROR("unknown exception in RegisterDB");
     }
     return "";
 }
@@ -185,12 +184,10 @@ std::string AuthorizationDB::DeRegisterDB(const std::string &email, const AuthDa
         }
         x->SetOK();
         return folderName;
-    } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in DeRegisterDB: {}", e.message));
-    } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in DeRegisterDB: {}", e.what()));
+    } catch (const std::exception &e) {
+        LOG_ERROR("exception in DeRegisterDB: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in DeRegisterDB");
+        LOG_ERROR("unknown exception in DeRegisterDB");
     }
     return "";
 }
@@ -221,14 +218,16 @@ int AuthorizationDB::GetDBList(const std::string &email, const std::string &grou
             dbName->set_app_name(rs->Get(6));
             dbName->set_group_filter(rs->Get(7));
         }
+<<<<<<< HEAD
         ShowLog(fmt::format("GetDBList for {}, groupFilter: {} returns {} ", email, groupFilter, response->size()));
+=======
+        LOG_INFO("GetDBList for {} retuns {} ", email, response->size());
+>>>>>>> 54b64538bd407e287153d47fe7ffd7d221386d95
         return response->size();
-    } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in GetDBList: {}", e.message));
-    } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in GetDBList: {}", e.what()));
+    } catch (const std::exception &e) {
+        LOG_ERROR("exception in GetDBList: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in GetDBList");
+        LOG_ERROR("unknown exception in GetDBList");
     }
     return 0;
 }
@@ -244,12 +243,10 @@ int AuthorizationDB::GetDBList(google::protobuf::RepeatedPtrField<AuthDatabasePr
             dbName->set_app_name(rs->Get(2));
         }
         return response->size();
-    } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in GetDBList: {}", e.message));
-    } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in GetDBList: {}", e.what()));
+    } catch (const std::exception &e) {
+        LOG_ERROR("exception in GetDBList: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in GetDBList");
+        LOG_ERROR("unknown exception in GetDBList");
     }
     return 0;
 }
@@ -288,12 +285,10 @@ bool AuthorizationDB::ShareDB(const std::string &email, const std::string &dbnam
             stt->ExecuteUpdate();
         }
         return true;
-    } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in ShareDB: {}", e.message));
-    } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in ShareDB: {}", e.what()));
+    } catch (const std::exception &e) {
+        LOG_ERROR("exception in ShareDB: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in ShareDB");
+        LOG_ERROR("unknown exception in ShareDB");
     }
     return false;
 }

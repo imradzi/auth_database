@@ -77,9 +77,6 @@ void AuthorizationDB::CheckStructure() {
     typeReg.Set("dbPrivacy_Restricted", "Restricted", "Restricted", "", typeId);
 
     auto reg = GetRegistry();
-    if (reg->GetKey("app_firebase_admin_credential_json_file").empty())
-        reg->SetKey("app_firebase_admin_credential_json_file", default_google_credential_file);
-
     if (GetSession().ExecuteScalar("select count(*) from users") == 0) {
         auto user = std::make_unique<AuthDatabaseProto::User>();
         user->set_email(ActivityTrackkerDB::OWNER_EMAIL);

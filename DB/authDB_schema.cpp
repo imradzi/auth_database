@@ -81,6 +81,7 @@ std::vector<DB::DBObjects> AuthorizationDB::objectList() const {
              "trans text, "
              "appname text,"
              "groupFilter text,"
+             "chatgroup text,"
              "privacyType int references types(id),"
              "timeCreated int, "
              "unique(dbname) "

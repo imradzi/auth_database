@@ -11,7 +11,7 @@
 
 #include "authDB.h"
 #include "GetSession.h"
-#include "logger.h"
+#include "logger/logger.h"
 
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
@@ -45,15 +45,13 @@ public:
     template<typename Request, typename Response>
     int Execute(const char *name, boost::beast::string_view sessionString, const Request* request, Response* response, std::function<bool(::AuthDatabaseProto::Session* session, AuthorizationDB*, const Request *, Response*)> fnCall, bool skipCheckEmailApproved=false, bool toValidateToken=false) {
         auto session = ::GetSession(sessionString);
-        ShowLog(fmt::format("{}> started -> session: email: {}, name:{}, telNo: {}, db:{}, appName:{}", name, session->user().email(), session->user().name(), session->user().tel_no(), session->db_name(), session->app_name()));
+        LOG_INFO("{}> started -> session: email: {}, name:{}, telNo: {}, db:{}, appName:{}", name, session->user().email(), session->user().name(), session->user().tel_no(), session->db_name(), session->app_name());
         try {
             return DoExecute(session.get(), request, response, fnCall, skipCheckEmailApproved, toValidateToken);
-        } catch (wpSQLException& e) {
-            ShowLog(fmt::format("{}> sql exception: {}", name, e.message));
-        } catch (std::exception& e) {
-            ShowLog(fmt::format("{}> sql exception: {}", name, e.what()));
+        } catch (const std::exception& e) {
+            LOG_ERROR("{}> sql exception: {}", name, e.what());
         } catch (...) {
-            ShowLog(fmt::format("{}> unknown exception", name));
+            LOG_ERROR("{}> unknown exception", name);
         }
         return -1;
     }
@@ -71,14 +69,11 @@ public:
                 context->AddTrailingMetadata("error-code", "-2");
             }
             return ::grpc::Status::OK;
-        } catch (wpSQLException& e) {
-            ShowLog(fmt::format("{}> sql exception: {}", name,e.message));
-            context->AddTrailingMetadata("error", e.message);
-        } catch (std::exception& e) {
-            ShowLog(fmt::format("{}> sql exception: {}", name, e.what()));
+        } catch (const std::exception& e) {
+            LOG_ERROR("{}> sql exception: {}", name, e.what());
             context->AddTrailingMetadata("error", e.what());
         } catch (...) {
-            ShowLog(fmt::format("{}> unknown exception", name));
+            LOG_ERROR("{}> unknown exception", name);
             context->AddTrailingMetadata("error", "exception");
         }
         return ::grpc::Status::CANCELLED;
@@ -96,7 +91,7 @@ public:
     //::grpc::Status GetConfig(::grpc::ServerContext* context, const AuthDatabaseProto::Config* request, AuthDatabaseProto::Config* config) override;
     //int GetConfig(boost::beast::string_view sessionString, const AuthDatabaseProto::Config* request, AuthDatabaseProto::Config* config);
      
-    ::grpc::Status GetConfig(::grpc::ServerContext* context, const AuthDatabaseProto::Config* request, AuthDatabaseProto::Config* config) {
+    ::grpc::Status GetConfig(::grpc::ServerContext* context, const AuthDatabaseProto::Config* request, AuthDatabaseProto::Config* config) override {
         return Execute<AuthDatabaseProto::Config, AuthDatabaseProto::Config>("GetConfig", context, request, config, DoGetConfig, true);
     }
 

@@ -20,7 +20,7 @@
 #include "auth_database.grpc.pb.h"
 #include "protofunctions.h"
 #include "GetSession.h"
-#include "logger.h"
+#include "logger/logger.h"
 
 static int GetInt(unsigned char c) {
     if (c >= '0' && c <= '9') return c - '0';
@@ -53,7 +53,7 @@ static void DumpBuffer(const unsigned char* buf, int len) {
         ss << std::ios::hex << int(*buf) << ",";
     }
     ss << "\n";
-    ShowLog(ss.str());
+    LOG_INFO(ss.str());
 }
 
 constexpr bool toDump = false;

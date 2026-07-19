@@ -27,7 +27,8 @@
 #endif
 
 #include "authDB.h"
-#include "logger.h"
+#include "guid.h"
+#include "logger/logger.h"
 
 #include <boost/uuid/random_generator.hpp>
 extern boost::uuids::random_generator_mt19937 uuidGen;
@@ -46,12 +47,10 @@ std::string AuthorizationDB::GetFolderNameInternal(const std::string &dbName) {
         if (rs->NextRow()) {
             return rs->Get(0);
         }
-    } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in GetFolderNameInternal: {}", e.message));
-    } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in GetFolderNameInternal: {}", e.what()));
+    } catch (const std::exception &e) {
+        LOG_ERROR("exception in GetFolderNameInternal: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in GetFolderNameInternal");
+        LOG_ERROR("unknown exception in GetFolderNameInternal");
     }
     return "";
 }
@@ -62,12 +61,10 @@ std::string AuthorizationDB::GetFolderName(const std::string &dbName) {
         authDb->Open();
         return authDb->GetFolderNameInternal(dbName);
 
-    } catch (wpSQLException &e) {
-        ShowLog(fmt::format("sql exception in GetFolderName: {}", e.message));
-    } catch (std::exception &e) {
-        ShowLog(fmt::format("exception in GetFolderName: {}", e.what()));
+    } catch (const std::exception &e) {
+        LOG_ERROR("exception in GetFolderName: {}", e.what());
     } catch (...) {
-        ShowLog("unknown exception in GetFolderName");
+        LOG_ERROR("unknown exception in GetFolderName");
     }
     return "";
 }

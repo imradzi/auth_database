@@ -3,8 +3,6 @@
 #include "authDB.h"
 #include "activityTrackkerDB.h"
 
-std::string AuthorizationDB::default_google_credential_file = "/home/radzi/dev/firebase_keys/RPS-Online-private-key/rps-pharmacy-online-firebase-adminsdk-iodfm-5d491c41db.json";
-
 std::string ActivityTrackkerDB::APPNAME = "RPS Pharmacy Online";
 std::string ActivityTrackkerDB::HOSTNAME = "demo.pharmapos.com";
 int ActivityTrackkerDB::PORT_NO = 33001;

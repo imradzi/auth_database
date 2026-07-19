@@ -19,9 +19,9 @@
 
 
 typedef std::function<void(const std::string&, const std::string&, const AuthDatabaseProto::DBName *)> CreateDbFunction;
+#include "../FirebaseAdminTokenVerifier.h"
 
 class AuthorizationDB : public DB::SQLiteBase {
-    static std::string default_google_credential_file;
 protected:
     std::vector<DB::DBObjects> objectList() const override;
     // int GetPrivacyType(AuthDatabaseProto::PrivacyType protoType);
@@ -33,10 +33,26 @@ protected:
     CreateDbFunction fnCreateDb;
     CreateDbFunction fnDeleteDb;
 public:
-    AuthorizationDB(CreateDbFunction fn = nullptr, CreateDbFunction fnDel=nullptr) : DB::SQLiteBase("authorization_internal.db"), fnCreateDb(fn), fnDeleteDb(fn) {}
     virtual ~AuthorizationDB() { Close(); }
     void CheckStructure() override;
     static auto GetFullName(const std::string& path, const std::string& name) -> std::string;
+
+    AuthorizationDB(CreateDbFunction fn = nullptr, CreateDbFunction fnDel=nullptr) 
+        : DB::SQLiteBase("authorization_internal.db"), fnCreateDb(fn), fnDeleteDb(fn) {}
+    
+    /**
+     * Lazy-initialize the process-wide FirebaseAdminTokenVerifier from the
+     * registry key "app_firebase_admin_credential_json_file".
+     * Returns true on success (or if already initialized).
+     */
+    static bool EnsureFirebaseVerifier();
+    static FirebaseAdminTokenVerifier* GetFirebaseVerifier() { return sFirebaseVerifier.get(); }
+    bool IsValidClientToken(const std::string& token, const std::string& email);
+    bool IsClientTokenExists(const std::string& email);
+    static bool CheckClientToken(const std::string& idToken, const std::string& email = "");
+
+private:
+    static std::shared_ptr<FirebaseAdminTokenVerifier> sFirebaseVerifier;
 
 public:
     std::string RegisterEmail(const AuthDatabaseProto::Session *session, AuthDatabaseProto::User* user, const std::string& deviceToken, const std::string &appName, const std::string &chatId);
@@ -84,11 +100,8 @@ public:
 
     std::shared_ptr<wpSQLStatement> GetDBUserRoles(const std::string& dbName, AuthDatabaseProto::User* user, std::shared_ptr<wpSQLStatement> stt);
 
-    bool IsValidClientToken(const std::string& token, const std::string& email);
-    bool IsClientTokenExists(const std::string& email);
-
-    bool CheckClientToken(const std::string& idToken, const std::string& email);
     bool SendNotification(const std::string& deviceToken, const std::string& title, const std::string& message);
+    std::tuple<bool, std::string> VerifyFirebaseIdToken(const std::string& idToken);
     bool SendGroupNotification(const std::vector<std::string>& deviceTokens, const std::string& title, const std::string& message);
     bool NotifyAdminUserCreated(const AuthDatabaseProto::User* user);
 

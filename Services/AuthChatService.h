@@ -48,3 +48,4 @@ public:
 };
 
 extern MQ::EventHandler<MQ::Queue<AuthChatProto::ServerEventMessage>, AuthChatProto::ServerEventMessage, AuthDatabaseProto::Session> globalMessage;
+void ShutdownAllChats();

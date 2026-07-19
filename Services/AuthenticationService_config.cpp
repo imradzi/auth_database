@@ -23,7 +23,7 @@
 #include "beast.h"
 
 #include "AuthenticationService.h"
-#include "logger.h"
+#include "logger/logger.h"
 
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
@@ -79,7 +79,7 @@ bool DoGetConfig(AuthDatabaseProto::Session* session, AuthorizationDB* authDb, c
     authDb->GetTypeList("dbPrivacyType", r->mutable_privacy_list());
     authDb->GetTypeList("userDBRoleGroupID", r->mutable_db_roles_list());
     authDb->GetTypeList("userRoleGroupID", r->mutable_user_roles_list());
-    ShowLog(fmt::format("GetConfig returns user: ", r->user().email()));
+    LOG_INFO("GetConfig returns user: ", r->user().email());
     return true;
 };
 
