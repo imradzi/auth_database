@@ -97,10 +97,4 @@ public:
     }
     std::tuple<bool, std::shared_ptr<wpSQLStatement>> GetTypeRecord(const std::string& id, AuthDatabaseProto::TypeRecord* rec, std::shared_ptr<wpSQLStatement> stt);  // stt = GetSession().PrepareStatement("select id, parentID, code, name, limitvalue, defaultvalue from types where id = @id")
     void GetTypeList(const std::string& regKey, google::protobuf::RepeatedPtrField<AuthDatabaseProto::TypeRecord>* list);
-
-    template<typename T>
-    void SetKey(const std::string& key, const T& value) { GetRegistry()->SetKey<T>(key, value); }
-
-    template<typename T>
-    T GetKey(const std::string& key, const T& defaultValue) { return GetRegistry()->GetKey<std::string>(key, defaultValue); }
 };

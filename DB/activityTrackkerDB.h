@@ -30,12 +30,6 @@ public:
     void CheckStructure() override;
 
 public:
-    std::string GetApplicationName() { return GetKey<std::string>("applicationName", APPNAME); }
-    void SetApplicationName(const std::string& name) { SetKey("applicationName", name); }
-
-    template<typename T>
-    void SetKey(const std::string &key, const T &value) {GetRegistry()->SetKey<T>(key, value);}
-
-    template<typename T>
-    T GetKey(const std::string& key, const T &defaultValue) { return GetRegistry()->GetKey<std::string>(key, defaultValue); }
+    std::string GetApplicationName() { return GetRegistry()->GetKey<std::string>("applicationName", APPNAME); }
+    void SetApplicationName(const std::string& name) { GetRegistry()->SetKey("applicationName", name); }
 };

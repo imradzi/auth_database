@@ -81,9 +81,14 @@ boost::beast::string_view GetSessionString(::grpc::ServerContext* context) {
 
 std::unique_ptr<AuthDatabaseProto::Session> GetSession(std::string_view str) {
     auto session = std::make_unique<AuthDatabaseProto::Session>();
+    ShowLog(fmt::format("session string: {}", str));
     auto [buf, len] = GetBufferFromString(str);
     if (toDump) DumpBuffer(buf, len);
-    session->ParseFromArray(buf, len);
+    if (session->ParseFromArray(buf, len)) {
+        ShowLog(fmt::format("extract into session ok {}", Protobuf::ToJSON(*session)));
+    } else {
+        ShowLog("extract into session FAILED");
+    }
     delete[] buf;
     return session;
 }

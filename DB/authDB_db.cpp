@@ -131,8 +131,8 @@ std::string AuthorizationDB::RegisterDB(const AuthDatabaseProto::DBName *db, Cre
                 auto d = std::make_unique<ActivityTrackkerDB>(folderName, dbName);
                 d->Open(true);
                 d->SetApplicationName(db->app_name());
-                d->SetKey("master", db->master_name());
-                d->SetKey("trans", db->trans_name());
+                d->GetRegistry()->SetKey("master", db->master_name());
+                d->GetRegistry()->SetKey("trans", db->trans_name());
             }
         }
         x->SetOK();
@@ -221,7 +221,7 @@ int AuthorizationDB::GetDBList(const std::string &email, const std::string &grou
             dbName->set_app_name(rs->Get(6));
             dbName->set_group_filter(rs->Get(7));
         }
-        ShowLog(fmt::format("GetDBList for {} retuns {} ", email, response->size()));
+        ShowLog(fmt::format("GetDBList for {}, groupFilter: {} returns {} ", email, groupFilter, response->size()));
         return response->size();
     } catch (wpSQLException &e) {
         ShowLog(fmt::format("sql exception in GetDBList: {}", e.message));
