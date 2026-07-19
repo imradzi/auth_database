@@ -218,11 +218,7 @@ int AuthorizationDB::GetDBList(const std::string &email, const std::string &grou
             dbName->set_app_name(rs->Get(6));
             dbName->set_group_filter(rs->Get(7));
         }
-<<<<<<< HEAD
         ShowLog(fmt::format("GetDBList for {}, groupFilter: {} returns {} ", email, groupFilter, response->size()));
-=======
-        LOG_INFO("GetDBList for {} retuns {} ", email, response->size());
->>>>>>> 54b64538bd407e287153d47fe7ffd7d221386d95
         return response->size();
     } catch (const std::exception &e) {
         LOG_ERROR("exception in GetDBList: {}", e.what());
