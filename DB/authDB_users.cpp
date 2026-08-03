@@ -76,17 +76,24 @@ std::shared_ptr<wpSQLStatement> AuthorizationDB::GetDBUserRoles(const std::strin
             "select db.dbname, roleId "
             "from dbUserRoles u "
             "inner join databases db on db.id=u.dbId "
-            "where u.userId=@uid and db.dbname=@dbName and ifnull(u.timeApproved,0) > 0 ");
+            "where u.userId=@uid and db.dbname=@dbName and ifnull(u.timeApproved,0) > 0 order by 1");
     }
     stt->Bind("@uid", user->id());
     stt->Bind("@dbName", dbName);
     auto rs = stt->ExecuteQuery();
     bool res;
     std::shared_ptr<wpSQLStatement> sttGetType;
+    std::string prevDbName;
+    AuthDatabaseProto::DatabaseRole *x = nullptr;
     while (rs->NextRow()) {
-        auto x = user->add_user_db_roles();
-        x->set_db_name(rs->Get(0));
-        std::tie(res, sttGetType) = GetTypeRecord(rs->Get(1), x->mutable_roles(), sttGetType);
+        if (prevDbName != rs->Get(0)) {
+            prevDbName = rs->Get(0);
+            x = user->add_user_db_roles();
+            x->set_db_name(rs->Get(0));
+        }
+        if (x == nullptr) continue;
+        auto role = x->mutable_roles()->Add();
+        std::tie(res, sttGetType) = GetTypeRecord(rs->Get(1), role, sttGetType);
     }
     
     LOG_INFO("AuthorizationDB::GetDBUserRoles> user: {} for db: {} -> roles", user->email(), dbName, user->user_db_roles_size());
