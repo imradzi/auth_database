@@ -78,6 +78,18 @@ std::shared_ptr<wpSQLStatement> AuthorizationDB::GetDBUserRoles(const std::strin
             "inner join databases db on db.id=u.dbId "
             "where u.userId=@uid and db.dbname=@dbName and ifnull(u.timeApproved,0) > 0 order by 1");
     }
+    auto reg = GetRegistry();
+    std::unordered_map<int, AuthDatabaseProto::USER_DB_ROLE> roleMap {
+        {reg->GetKey<int>("udbRoles_Account", 0), AuthDatabaseProto::UDB_ROLE_Account},
+        {reg->GetKey<int>("udbRoles_Admin", 0), AuthDatabaseProto::UDB_ROLE_Admin },
+        {reg->GetKey<int>("udbRoles_Authorizer", 0), AuthDatabaseProto::UDB_ROLE_Authorizer },
+        {reg->GetKey<int>("udbRoles_Merchant", 0), AuthDatabaseProto::UDB_ROLE_Merchant },
+        {reg->GetKey<int>("udbRoles_Moderator", 0), AuthDatabaseProto::UDB_ROLE_Moderator },
+        {reg->GetKey<int>("udbRoles_Owner", 0), AuthDatabaseProto::UDB_ROLE_Owner },
+        {reg->GetKey<int>("udbRoles_Participant", 0), AuthDatabaseProto::UDB_ROLE_Participant },
+        {reg->GetKey<int>("udbRoles_Primary", 0), AuthDatabaseProto::UDB_ROLE_Primary }
+    };
+
     stt->Bind("@uid", user->id());
     stt->Bind("@dbName", dbName);
     auto rs = stt->ExecuteQuery();
@@ -93,6 +105,7 @@ std::shared_ptr<wpSQLStatement> AuthorizationDB::GetDBUserRoles(const std::strin
         }
         if (x == nullptr) continue;
         auto role = x->mutable_roles()->Add();
+        x->add_db_roles(roleMap[rs->Get<int>(1)]);
         std::tie(res, sttGetType) = GetTypeRecord(rs->Get(1), role, sttGetType);
     }
     

@@ -30,6 +30,6 @@ public:
     void CheckStructure() override;
 
 public:
-    std::string GetApplicationName() { return GetKey<std::string>("applicationName", APPNAME); }
-    void SetApplicationName(const std::string& name) { SetKey("applicationName", name); }
+    std::string GetApplicationName() { return GetRegistry()->GetKey<std::string>("applicationName", APPNAME); }
+    void SetApplicationName(const std::string& name) { GetRegistry()->SetKey("applicationName", name); }
 };

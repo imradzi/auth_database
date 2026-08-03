@@ -105,7 +105,7 @@
                 "where u.email != 'anonymous@public' "
                 " and exists (select * from dbuserroles where userid=u.id and roleid = {} {} and dbid=(select id from databases where dbname='{}')) "
                 "order by uf.name ",
-                db->GetKey<std::string>("udbRoles_Admin", ""), ftsSearch, session->db_name());
+                db->GetRegistry()->GetKey<std::string>("udbRoles_Admin", ""), ftsSearch, session->db_name());
         } else {
             sql = fmt::format(
                 "select "

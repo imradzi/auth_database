@@ -64,12 +64,13 @@ bool DoGetConfig(AuthDatabaseProto::Session* session, AuthorizationDB* authDb, c
             // TODO: need to get the app name from ppos server
         }
     }
-    authDb->GetUser(*session, r->mutable_user());
+    auto user = r->mutable_user();
+    authDb->GetUser(*session, user);
     auto reg = authDb->GetRegistry();
     auto adminRole = reg->GetKey<int>("uRoles_Admin");
     auto authorizeEmailRole = reg->GetKey<int>("uRoles_Authorizer");
     bool toGetApprovalList = false;
-    for (auto t : r->user().user_roles()) {
+    for (auto t : user->user_roles()) {
         auto tid = to_number<int>(t.id());
         if (tid == adminRole || tid == authorizeEmailRole)
             toGetApprovalList = true;
