@@ -58,9 +58,20 @@ public:
 
     template<typename Request, typename Response>
     ::grpc::Status Execute(const char *name, ::grpc::ServerContext* context, const Request* request, Response* response, std::function<bool(::AuthDatabaseProto::Session* session, AuthorizationDB*, const Request *, Response*)> fnCall, bool skipCheckEmailApproved = false, bool toValidateToken = false) {
-        auto session = GetSession(context);
+        // Resolve the session through ReadMetaData so the PWA Firebase bearer
+        // path (authorization header → email/db) works for auth-service calls
+        // too — GetConfig runs first during login and must resolve the real
+        // user (roles, approval) instead of a blank session. Legacy clients
+        // still arrive through the session header inside ::GetSession (called
+        // by ReadMetaData), so their behaviour is unchanged.
+        auto [metaOk, metaSession, metaAuthDb] = ReadMetaData(name, context, skipCheckEmailApproved, toValidateToken);
+        if (!metaOk || !metaSession) {
+            // ReadMetaData already attached "error"/"error-code" trailing
+            // metadata; keep the legacy contract (OK + trailing metadata).
+            return ::grpc::Status::OK;
+        }
         try {
-            auto ret = DoExecute(session.get(), request, response, fnCall, skipCheckEmailApproved, toValidateToken);
+            auto ret = DoExecute(metaSession.get(), request, response, fnCall, skipCheckEmailApproved, toValidateToken);
             if (ret == -1) {
                 context->AddTrailingMetadata("error", "Token missing.");
                 context->AddTrailingMetadata("error-code", "-1");

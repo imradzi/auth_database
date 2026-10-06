@@ -38,6 +38,19 @@ namespace fs = std::filesystem;
 
 ObservableAtomic isShuttingDown {false};
 
+// Process-wide observer (arham PWA event bridge). Guarded by a mutex; copied
+// under the lock and invoked outside it so a slow observer never blocks chat
+// delivery.
+namespace {
+ServerEventObserver g_serverEventObserver;
+std::mutex g_serverEventObserverMutex;
+}
+
+void SetServerEventObserver(ServerEventObserver observer) {
+    std::lock_guard<std::mutex> lock(g_serverEventObserverMutex);
+    g_serverEventObserver = std::move(observer);
+}
+
 MQ::EventHandler<MQ::Queue<AuthChatProto::ServerEventMessage>, AuthChatProto::ServerEventMessage, AuthDatabaseProto::Session> globalMessage([](const std::string& queueKey) {
     AuthChatProto::ServerEventMessage event;
     event.set_type(AuthChatProto::EventType::ev_chat);
@@ -137,6 +150,24 @@ MessageSender::~MessageSender() {
                 if (msgQ->send(msg) == MQ::OK) break;
                 if (std::chrono::system_clock::now() - start > 60s) {
                     break;  // give up trying after 60 secs.
+                }
+            }
+        }
+
+        // Notify the process-wide observer (arham PWA event bridge).
+        {
+            ServerEventObserver observer;
+            {
+                std::lock_guard<std::mutex> lock(g_serverEventObserverMutex);
+                observer = g_serverEventObserver;
+            }
+            if (observer) {
+                try {
+                    observer(msg, originator, isBroadcast);
+                } catch (const std::exception& e) {
+                    LOG_WARN("MessageSender: event observer failed: {}", e.what());
+                } catch (...) {
+                    LOG_WARN("MessageSender: event observer failed with unknown exception");
                 }
             }
         }

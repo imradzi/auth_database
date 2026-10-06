@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include "messageQueue.h"
 using namespace std::chrono_literals;
 #include "AuthenticationService.h"
@@ -17,6 +18,13 @@ public:
 };
 
 extern MQ::EventHandler<MQ::Queue<AuthChatProto::ServerEventMessage>, AuthChatProto::ServerEventMessage, AuthDatabaseProto::Session> globalMessage;
+
+// Process-wide observer receiving every committed MessageSender event.
+// Used by the arham server's PWA event bridge (ppos never sets it).
+using ServerEventObserver = std::function<void(const AuthChatProto::ServerEventMessage& event,
+                                               const AuthDatabaseProto::Session& originator,
+                                               bool isBroadcast)>;
+void SetServerEventObserver(ServerEventObserver observer);
 
 /*
         auto sender = MessageSender::Create(AuthChatProto::EventType::ev_paymentreceived);
