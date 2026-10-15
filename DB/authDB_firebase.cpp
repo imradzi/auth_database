@@ -36,8 +36,10 @@ std::shared_ptr<FirebaseAdminTokenVerifier> AuthorizationDB::sFirebaseVerifier;
 
 /**
  * Lazy-initialize the process-wide FirebaseAdminTokenVerifier.
- * Reads the service-account credential path from the registry key
- * "app_firebase_admin_credential_json_file".
+ *
+ * Keyless mode: verification calls Identity Toolkit accounts:lookup with the
+ * project's public web API key — no service-account credential file is
+ * required on this machine.
  *
  * Called by VerifyFirebaseIdToken and CheckClientToken on first use.
  * Once initialized, gRPC_Server's VerifyFirebaseToken picks it up
@@ -53,31 +55,17 @@ bool AuthorizationDB::EnsureFirebaseVerifier() {
         return true;  // already initialized
     }
 
-    AuthorizationDB authDB;
-    authDB.Open();
-    auto credFilePath = authDB.GetRegistry()->GetKey("app_firebase_admin_credential_json_file");
-    if (credFilePath.empty()) {
-        LOG_ERROR("AuthorizationDB::EnsureFirebaseVerifier - Firebase credential path not configured in registry "
-                  "(key: app_firebase_admin_credential_json_file)");
-        return false;
-    }
-
-    try {
-        sFirebaseVerifier = std::make_shared<FirebaseAdminTokenVerifier>(credFilePath);
-        LOG_INFO("AuthorizationDB::EnsureFirebaseVerifier - Firebase verifier initialized from: {}", credFilePath);
-        return true;
-    } catch (const std::exception& e) {
-        LOG_ERROR("AuthorizationDB::EnsureFirebaseVerifier - Failed to initialize Firebase verifier: {}", e.what());
-        return false;
-    }
+    sFirebaseVerifier = std::make_shared<FirebaseAdminTokenVerifier>();
+    LOG_INFO("AuthorizationDB::EnsureFirebaseVerifier - Firebase verifier initialized (keyless accounts:lookup mode)");
+    return true;
 }
 
 /**
- * Initialize Firebase Admin SDK and verify ID token with Firebase
- * 
+ * Verify a Firebase ID token with Firebase (keyless accounts:lookup)
+ *
  * This method:
- * 1. Lazy-loads the FirebaseAdminTokenVerifier from service account JSON
- * 2. Calls Firebase Admin API to verify the ID token
+ * 1. Lazy-loads the shared FirebaseAdminTokenVerifier
+ * 2. Calls Google's Identity Toolkit to validate the ID token
  * 3. Caches positive verification results in SQLite (idTokens table)
  * 4. Returns true if token is valid, false otherwise
  */

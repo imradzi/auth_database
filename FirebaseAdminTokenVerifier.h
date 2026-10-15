@@ -1,93 +1,34 @@
 #pragma once
 
 #include <string>
-#include <memory>
 #include <tuple>
-#include <chrono>
-#include <mutex>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
 /**
- * FirebaseAdminTokenVerifier - Verifies Firebase ID tokens using Firebase Admin SDK
- * 
- * This class handles:
- * 1. Loading Firebase service account JSON (with private key)
- * 2. Creating signed JWT tokens (RS256) for Firebase Admin API authentication
- * 3. Calling Firebase Admin API to verify ID tokens
- * 4. Caching JWTs to avoid repeated signing operations
- * 5. Extracting and returning verified user email
+ * FirebaseAdminTokenVerifier - keyless Firebase ID-token verification.
+ *
+ * Verifies Firebase ID tokens against the Identity Toolkit REST endpoint
+ * (accounts:lookup) using the project's PUBLIC web API key. Google performs
+ * the actual validation server-side (the same mechanism the Firebase client
+ * SDKs rely on), so no service-account credential file is needed on ppServer
+ * installs anymore.
+ *
+ * The service-account JSON now lives only on the ppGateway host, solely for
+ * FCM push sending (FcmSender). See docs/keyless-firebase-verification-plan.md.
  */
 class FirebaseAdminTokenVerifier {
-private:
-    // Service account credentials
-    std::string privateKey;           // RSA private key (PEM format)
-    std::string clientEmail;          // Service account email
-    std::string projectId;            // Firebase project ID
-    std::string tokenUri;             // Token endpoint URI
-    
-    // JWT caching
-    std::string cachedJwt;
-    std::chrono::system_clock::time_point jwtExpiry;
-    
-    // OAuth access token caching
-    std::string cachedAccessToken;
-    std::chrono::system_clock::time_point accessTokenExpiry;
-    
-    // Mutex to protect cached JWT/access token fields from concurrent access
-    mutable std::mutex cacheMutex_;
-    
-    // Constants
-    static constexpr int JWT_LIFETIME_SECONDS = 3600;      // 1 hour
-    static constexpr int JWT_REFRESH_THRESHOLD_MINUTES = 5; // Refresh before 5 min expiry
-    static const std::string FIREBASE_API_ENDPOINT;
-    static const std::string JWT_ALGORITHM;
-    
-private:
-    /**
-     * Load Firebase service account from JSON file
-     * Extracts: private_key, client_email, project_id
-     */
-    bool LoadServiceAccount(const std::string& credentialJsonPath);
-    
-    /**
-     * Create a base64url encoded string
-     */
-    static std::string Base64UrlEncode(const std::string& input);
-    
-    /**
-     * Sign data using RSA private key (RS256 algorithm)
-     * Returns base64url-encoded signature
-     */
-    std::string SignWithRS256(const std::string& message);
-    
-    /**
-     * Exchange a self-signed JWT for an OAuth 2.0 access token.
-     * Caller MUST hold cacheMutex_. Updates cachedAccessToken / accessTokenExpiry.
-     */
-    std::string ExchangeJwtForAccessTokenLocked(const std::string& jwt);
-    
-    /**
-     * Create a new service account JWT.
-     * Caller MUST hold cacheMutex_. Updates cachedJwt / jwtExpiry.
-     */
-    std::string CreateServiceAccountJwtLocked();
-
 public:
-    /**
-     * Constructor - loads Firebase service account from credential file
-     * @param credentialJsonPath Path to Firebase service account JSON file
-     * @throws std::runtime_error if credential file cannot be loaded or parsed
-     */
-    FirebaseAdminTokenVerifier(const std::string& credentialJsonPath);
-    
+    /** No credentials to load — argument-less for call-site compatibility. */
+    FirebaseAdminTokenVerifier();
+
     ~FirebaseAdminTokenVerifier() = default;
-    
+
     /**
      * Verify a Firebase ID token
      * @param idToken The ID token to verify (from client)
-     * @param expectedEmail Optional email to validate against decoded token
+     * @param expectedEmail Optional email to validate against the verified token
      * @return {success, email_or_error_message}
      *         - success=true: email contains verified email from Firebase
      *         - success=false: email contains error description

@@ -35,7 +35,6 @@ class AuthenticationService final : public ::AuthDatabaseProto::AuthenticationSe
                 return fnCall(session, authDb.get(), request, response) ? 1 : 0;
             }
         } else {
-            authDb->NotifyAdminUserCreated(&session->user());
             return -2;
         }
         return 1;

@@ -100,9 +100,6 @@ std::tuple<bool, std::unique_ptr<AuthDatabaseProto::Session>, std::unique_ptr<Au
                 return {true, std::move(session), std::move(authDb)};
             }
         } else {
-            auto user = std::make_unique<AuthDatabaseProto::User>();
-            user->set_email(session->user().email());
-            authDb->NotifyAdminUserCreated(user.get());
             context->AddTrailingMetadata("error", "User not approved yet.");
             context->AddTrailingMetadata("error-code", "-2");
             return {false, nullptr, nullptr};

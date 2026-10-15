@@ -113,7 +113,6 @@ std::string AuthorizationDB::RegisterEmail(const AuthDatabaseProto::Session *ses
             stt->Bind("@uid", uid);
             stt->Bind("@token", deviceToken);
             stt->ExecuteUpdate();
-            SendNotification(deviceToken, appName, fmt::format("{} successfully logged in", user->name()));
         }
         return std::to_string(uid);
     } catch (const std::exception &e) {

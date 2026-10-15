@@ -41,9 +41,9 @@ public:
         : DB::SQLiteBase("authorization_internal.db"), fnCreateDb(fn), fnDeleteDb(fn) {}
     
     /**
-     * Lazy-initialize the process-wide FirebaseAdminTokenVerifier from the
-     * registry key "app_firebase_admin_credential_json_file".
-     * Returns true on success (or if already initialized).
+     * Lazy-initialize the process-wide FirebaseAdminTokenVerifier (keyless —
+     * public web API key + Identity Toolkit accounts:lookup; no credential
+     * file required). Returns true on success (or if already initialized).
      */
     static bool EnsureFirebaseVerifier();
     static FirebaseAdminTokenVerifier* GetFirebaseVerifier() { return sFirebaseVerifier.get(); }
@@ -100,10 +100,7 @@ public:
 
     std::shared_ptr<wpSQLStatement> GetDBUserRoles(const std::string& dbName, AuthDatabaseProto::User* user, std::shared_ptr<wpSQLStatement> stt);
 
-    bool SendNotification(const std::string& deviceToken, const std::string& title, const std::string& message);
     std::tuple<bool, std::string> VerifyFirebaseIdToken(const std::string& idToken);
-    bool SendGroupNotification(const std::vector<std::string>& deviceTokens, const std::string& title, const std::string& message);
-    bool NotifyAdminUserCreated(const AuthDatabaseProto::User* user);
 
     void GetTypeList(const std::string& regKey, AuthDatabaseProto::TypeList* result) {
         GetTypeList(regKey, result->mutable_list());

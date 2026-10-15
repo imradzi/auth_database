@@ -151,9 +151,7 @@ int64_t AuthorizationDB::CreateUser(const AuthDatabaseProto::Session *session, c
     LOG_INFO("Create user (id: {}, name: {}, tel: {})", user->id(), user->name(), user->tel_no());
     auto id = SaveUser(session, user);
     LOG_INFO("Create user returns id = {}", id);
-    if (id > 0) {
-        NotifyAdminUserCreated(user);
-    }
+
     return id;
 }
 
