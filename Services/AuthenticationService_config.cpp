@@ -88,13 +88,19 @@ std::shared_ptr<std::vector<char>> ExecuteCommand(boost::beast::string_view comm
     if (boost::iequals(command.substr(0, 9), "getconfig")) {
         AuthenticationService authService;
         AuthDatabaseProto::Config cfg;
-        cfg.ParseFromArray(body.data(), body.size());
+        if (!cfg.ParseFromArray(body.data(), static_cast<int>(body.size()))) {
+            LOG_ERROR("ExecuteCommand> failed to parse getconfig request for '{}'", std::string(command.data(), command.size()));
+            return nullptr;
+        }
 
         auto out = std::make_unique<AuthDatabaseProto::Config>();
         authService.GetConfig(sessionString, &cfg, out.get());
         auto sz = out->ByteSizeLong();
         auto res = std::make_shared<std::vector<char>>(sz, ' ');
-        cfg.SerializeToArray(res->data(), sz);
+        if (!out->SerializeToArray(res->data(), static_cast<int>(sz))) {
+            LOG_ERROR("ExecuteCommand> failed to serialize getconfig response for '{}'", std::string(command.data(), command.size()));
+            return nullptr;
+        }
         return res;
     }
     return nullptr;
