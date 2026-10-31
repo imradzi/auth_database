@@ -8,7 +8,7 @@
 // returns 0 = filename
 //          1 = string
 
-std::tuple<int, std::string, std::shared_ptr<std::vector<char>>> process_web_command(boost::beast::http::verb method, boost::beast::string_view command, boost::beast::string_view body, std::function<boost::beast::string_view(boost::beast::string_view key)> fnHeader) {
+std::tuple<int, std::string, std::shared_ptr<std::vector<char>>> process_web_command(boost::beast::http::verb method, boost::beast::string_view command, boost::beast::string_view body, std::function<boost::beast::string_view(boost::beast::string_view key)> fnHeader, int* outStatusCode) {
     auto contentType = fnHeader("Content-Type");
     auto verbString = boost::beast::http::to_string(method);
 
