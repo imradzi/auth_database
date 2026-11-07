@@ -1,7 +1,11 @@
 #pragma once
 
+#include <chrono>
+#include <deque>
+#include <mutex>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -34,4 +38,24 @@ public:
      *         - success=false: email contains error description
      */
     std::tuple<bool, std::string> VerifyIdToken(const std::string& idToken, const std::string& expectedEmail = "");
+
+    /** Number of cached (positive) token verifications. */
+    size_t CacheSize() const;
+
+    /** Drop every cached verification (tests / credential rotation). */
+    void ClearCache();
+
+private:
+    struct CacheEntry {
+        std::string email;
+        std::chrono::steady_clock::time_point expiresAt;
+    };
+
+    // Positive-only cache: a token is remembered only after Google accepted it.
+    // Keyed by the full idToken (never logged), bounded FIFO with a TTL that is
+    // also capped by the token's own `exp` claim. This removes the per-RPC
+    // accounts:lookup round-trip that dominated every gateway tunnel call.
+    mutable std::mutex cacheMutex_;
+    std::unordered_map<std::string, CacheEntry> cache_;
+    std::deque<std::string> cacheOrder_;
 };
